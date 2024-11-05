@@ -1,0 +1,11 @@
+fastapi
+httpx
+redis
+uvicorn
+numpy
+aioredis
+openai
+pydantic
+beautifulsoup4
+requests
+python-jose
