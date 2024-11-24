@@ -1,6 +1,5 @@
 import requests
 
-
 class RAG:
     def __init__(self):
         self.retrieval_url = (
