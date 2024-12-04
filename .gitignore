@@ -121,11 +121,18 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# Prometheus
+src/server/prometheus/.prometheus
+src/server/prometheus/
+src/server/prometheus
+
 # Environments
 .env
 .venv
+.myenv
 env/
 venv/
+myenv/
 ENV/
 env.bak/
 venv.bak/
