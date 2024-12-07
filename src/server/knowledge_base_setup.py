@@ -5,9 +5,9 @@ import faiss
 import numpy as Np
 from langchain.text_splitter import CharacterTextSplitter
 from sentence_transformers import SentenceTransformer
-from src.exception import CustomException
-from src.logger import logging
-from src.utils import save_vector_db
+from helpers.exception import CustomException
+from helpers.logger import logging
+from helpers.utils import save_vector_db
 
 
 class KnowledgeBase:
