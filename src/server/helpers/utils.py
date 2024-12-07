@@ -4,8 +4,8 @@ import json
 import numpy as Np
 import pandas as Pd
 import faiss
-from src.exception import CustomException
-from src.logger import logging
+from helpers.exception import CustomException
+from helpers.logger import logging
 
 def save_vector_db(embeddings, chunks, index_file):
     try:
