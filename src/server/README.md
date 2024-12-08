@@ -1,5 +1,13 @@
 
 
+## FAISS Indices for FAU Data
+### Light Index (384 dims, all-MiniLM-L6-v2): 
+[Link Text](https://drive.google.com/file/d/1qOECFQ_Df_sBCextiqRbPjeKHTFXpbdW/view?usp=sharing)
+### Normal Index (768 dims, all-mpnet-base-v2): 
+[Link Text](https://drive.google.com/file/d/1-0ncb5rZ-9SSosAocHnuR6iYIfLLdtNE/view?usp=sharing)
+
+Update `VECTORSTORE_PATH` in the script and run your model.
+
 ## How to generate the server certificates
 run `sh generate_certs.sh`
 
@@ -40,6 +48,9 @@ run `./prometheus --config.file=server/prometheus.yml`
 
 ### Step 2: Open browser to "localhost:9090" {Prometheus}
 goto `Targets -> Health Tracking`
-
 ### Step 3: Open browser to "localhost:3000" {Grafana}
 goto `Dashboards`
+
+##################################
+
+
