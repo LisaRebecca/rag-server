@@ -23,6 +23,7 @@ def __init__(self):
 def retrieval(query, index, metadata, top_k = 5):
     try:
         retriever = SentenceTransformer("sentence-transformers/all-mpnet-base-v2") # Hugging Face model
+        # retriever = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
         query_embedding = retriever.encode([query])
 
         _, indices = index.search(Np.array(query_embedding, dtype = "float32"), top_k)
