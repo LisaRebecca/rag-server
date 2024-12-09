@@ -44,11 +44,13 @@ run `control c`
 
 ## Running Server Health Tracking System {Prometheus + Grafana}
 ### Step 1: Run APP using Docker
-run `./prometheus --config.file=server/prometheus.yml`
+run `./prometheus --config.file=src/server/prometheus.yml`
 
 ### Step 2: Open browser to "localhost:9090" {Prometheus}
 goto `Targets -> Health Tracking`
 ### Step 3: Open browser to "localhost:3000" {Grafana}
+run `brew install grafana`
+run `brew services start grafana`
 goto `Dashboards`
 
 ##################################
