@@ -121,10 +121,16 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
+# JSON
+/src/project/knowledgebase/quality_html-pdf.jsonl
+/src/project/knowledgebase/metadata.json
+
+# FAISS
+src/project/vector_index_fau.faiss
+src/project/vector_index.faiss
+
 # Prometheus
-src/server/prometheus/.prometheus
-src/server/prometheus/
-src/server/prometheus
+/prometheus
 
 # Environments
 .env
