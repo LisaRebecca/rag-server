@@ -21,3 +21,4 @@ passlib
 python-dotenv
 bcrypt
 streamlit
+locust

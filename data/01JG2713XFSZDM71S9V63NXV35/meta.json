@@ -1,0 +1,17 @@
+{
+	"ulid": "01JG2713XFSZDM71S9V63NXV35",
+	"minTime": 1735229304454,
+	"maxTime": 1735236000000,
+	"stats": {
+		"numSamples": 126,
+		"numSeries": 21,
+		"numChunks": 21
+	},
+	"compaction": {
+		"level": 1,
+		"sources": [
+			"01JG2713XFSZDM71S9V63NXV35"
+		]
+	},
+	"version": 1
+}
