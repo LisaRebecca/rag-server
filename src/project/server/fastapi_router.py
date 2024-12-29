@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter
 from pydantic import BaseModel
 
-from rag.vanilla_RAG import retrieval, generation, tokenizer, model
+from rag.vanilla_RAG import generation, tokenizer, model
+from rag.rag_retrieval import RAG_Retrieval
 from helpers.utils import load_vector_db
 from server.university_api import query_university_endpoint
 
@@ -29,7 +30,7 @@ async def handle_query(request: QueryRequest):
 
     # Step 1: Retrieval
     try:
-        retrieved_docs = retrieval(request.query, index, metadata)
+        retrieved_docs = RAG_Retrieval.dense_retrieval(request.query, index, metadata)
 
         # Step 2: Generation
         rag_response = generation(request.query, retrieved_docs, tokenizer, model)
@@ -37,7 +38,6 @@ async def handle_query(request: QueryRequest):
         rag_query = f"Based on the following documents {retrieved_docs}, please asnwer this question: {request.query}."
 
         # Step 3: Call University API
-        # uni_response = query_university_endpoint(request.query)
         uni_response = query_university_endpoint(rag_query)
 
         output = (

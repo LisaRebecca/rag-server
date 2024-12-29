@@ -6,6 +6,14 @@ import faiss
 from helpers.exception import CustomException
 from helpers.logger import logging
 from sentence_transformers import SentenceTransformer
+from nltk.tokenize import word_tokenize
+
+def preprocess_knowledgebase(knowledgebase):
+    corpus = []
+    for entry in knowledgebase:
+        tokens = word_tokenize(entry["text"].lower())
+        corpus.append(tokens)
+    return corpus
 
 def save_vector_db(embeddings, chunks, index_file, metadata_file):
     try:

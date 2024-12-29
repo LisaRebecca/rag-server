@@ -22,3 +22,5 @@ python-dotenv
 bcrypt
 streamlit
 locust
+rank-bm25
+nltk
