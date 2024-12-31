@@ -15,6 +15,30 @@ def preprocess_knowledgebase(knowledgebase):
         corpus.append(tokens)
     return corpus
 
+def dense_embeddings(dense_model, metadata):
+    try:
+        if not metadata:
+            raise ValueError("Metadata is empty or None.")
+        
+        embeddings = []
+        for idx, entry in enumerate(metadata):
+            text = entry.get("text")
+            if not text:
+                print(f"Skipping entry {idx}: Missing or empty 'text' field.")
+                continue
+            
+            # Encode text into dense embeddings
+            embedding = dense_model.encode(text, convert_to_numpy=True)
+            embeddings.append(embedding)
+
+        if not embeddings:
+            raise ValueError("No embeddings could be computed from the provided metadata.")
+        
+        return np.array(embeddings)
+    
+    except Exception as e:
+        raise CustomException(e, sys)
+
 def save_vector_db(embeddings, chunks, index_file, metadata_file):
     try:
         # Save FAISS index
