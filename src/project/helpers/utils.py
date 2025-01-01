@@ -15,30 +15,61 @@ def preprocess_knowledgebase(knowledgebase):
         corpus.append(tokens)
     return corpus
 
-def dense_embeddings(dense_model, metadata):
-    try:
-        if not metadata:
-            raise ValueError("Metadata is empty or None.")
-        
-        embeddings = []
-        for idx, entry in enumerate(metadata):
-            text = entry.get("text")
-            if not text:
-                print(f"Skipping entry {idx}: Missing or empty 'text' field.")
-                continue
-            
-            # Encode text into dense embeddings
-            embedding = dense_model.encode(text, convert_to_numpy=True)
-            embeddings.append(embedding)
+def remove_duplicates(results):
+    unique_texts = set()
+    unique_results = []
+    for result in results:
+        if result["text"] not in unique_texts:
+            unique_results.append(result)
+            unique_texts.add(result["text"])
+    return unique_results
 
-        if not embeddings:
-            raise ValueError("No embeddings could be computed from the provided metadata.")
-        
-        return np.array(embeddings)
+def filter_results(results, query):
+    filtered_results = []
+    keywords = query.lower().split()
+    for result in results:
+        if isinstance(result, tuple) and len(result) > 0 and isinstance(result[0], dict) and 'text' in result[0]:
+            metadata = result[0]
+            for keyword in keywords:
+                if any(keyword in metadata['text'].lower()):
+                    filtered_results.append(result)
+    return filtered_results
+
+def dense_embeddings(dense_model, metadata, batch_size = 32):
+    if not metadata:
+        raise ValueError("Metadata Empty or None!")
     
-    except Exception as e:
-        raise CustomException(e, sys)
+    #texts = [entry.get("text") for entry in metadata if entry.get("texts")]
+    for entry in metadata:
+        if entry.get("text"):
+            texts = [entry.get("text")]
 
+    if not texts:
+        raise ValueError("No valid Text entries found in your Metadata!")
+    
+    print(f"Total valid texts to process: {len(texts)}")
+
+    embeddings = []
+    total_batches = (len(texts) + batch_size - 1) // batch_size
+
+    for i in range(total_batches):
+        batch_start = i * batch_size
+        batch_end = min(batch_start + batch_size, len(texts))
+        batch_texts = texts[batch_start::batch_end]
+
+        try:
+            print(f"Processing batch {i + 1}/{total_batches}...")
+            batch_embeddings = dense_model.encode(batch_texts, convert_to_numpy=True)
+            embeddings.extend(batch_embeddings)
+
+        except Exception as e:
+            print(f"Error processing batch {i + 1}: {e}")
+            continue
+
+    embeddings = np.array(embeddings)
+    print(f"Computed embeddings for {embeddings.shape[0]} entries.")
+    return embeddings
+    
 def save_vector_db(embeddings, chunks, index_file, metadata_file):
     try:
         # Save FAISS index

@@ -42,26 +42,22 @@ def generation(query, retrieved_docs, tokenizer, model):
     
 def main():
     index, metadata = load_vector_db(index_file = VECTORSTORE_PATH, metadata_file = METADATA_PATH_FAU)
-    Query = "What are the prerequisites for the Data Science course?" # Example Query
+    # Query = "What are the prerequisites for the Data Science course?" # Example Query
     # Query = "Tell me about the RRZE" # Example Query
-    # Query = "How do I get into the FAU?" # Example Query
+    Query = "How do I get into the FAU?" # Example Query
     top_k = 5
     alpha = 0.5
-
-    hybrid_ret = RAG_Retrieval()
-    hybrid_retrieval = hybrid_ret.hybrid_retrieval(query = Query, metadata = metadata, top_k = top_k, alpha = alpha)
-
 
     # retrieve_dense = RAG_Retrieval.dense_retrieval(Query, index, metadata, 5)
     # retrieve_sparse = RAG_Retrieval.sparse_retrieval(Query, metadata, 5)
 
-    # hybrid_retrieval = RAG_Retrieval.hybrid_retrieval(query = Query, metadata = metadata, top_k = 20, alpha = 0.5)
+    hybrid_ret = RAG_Retrieval()
+    retrieve_hybrid = hybrid_ret.hybrid_retrieval(query = Query, metadata = metadata, top_k = top_k, alpha = alpha)
 
-    Answer = generation(Query, hybrid_retrieval, tokenizer, model)
+    answer = generation(Query, retrieve_hybrid, tokenizer, model)
     
     print(f"Query: {Query}")
-    print(f"Answer: {Answer}")
-
+    print(f"Answer: {answer}")
 
 if __name__ == "__main__":
     main()
