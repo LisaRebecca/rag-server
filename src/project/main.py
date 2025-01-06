@@ -3,17 +3,17 @@ from fastapi.responses import JSONResponse
 from server import fastapi_router
 from server.Auth import Authenticate_User, status, timedelta, ACCESS_TOKEN_EXPIRE_MINUTES, Create_Access_Token, User, Depends, Get_Current_User
 from rag.rag import RAG
+from server.fastapi_router import index
+from helpers.smart_cache import SmartCache
+from helpers.exception import CustomException
 from pydantic import BaseModel
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
 import openai
 import logging
-from helpers.exception import CustomException
-import asyncio
-import sys
 import uvicorn
 import os
 import psutil
-import time
+import sys
 
 # Prometheus Metrics
 REQUEST_COUNT = Counter('request_count', 'Total # of Requests')
@@ -37,6 +37,7 @@ app.include_router(fastapi_router.router, prefix="/api", tags=["Query"])
 
 # Initialize RAG application
 rag_app = RAG()
+cache = SmartCache(index = index)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -114,10 +115,12 @@ async def Metrics():
 @app.get("/cache")
 async def Cache_Contents():
     try:
-        Cache_Contents = await rag_app.inspect_cache()
-        return {"Cache Contents: ": Cache_Contents}
+        cache_contents = cache.get_cache_contents()
+        if not cache_contents:
+            return {"Message: Cache is Empty!"}
+        return {"Cache Contents: ": cache_contents}
     except Exception as e:
-        return {"Error": str(e)}
+        raise CustomException(e, sys)
 
 @app.post("/token")
 async def Login_For_Access_Token(request: TokenRequest):

@@ -39,7 +39,7 @@ class RAG_Retrieval:
             # print("Retrieved Documents:", retrieved_docs)
 
             logging.info("Documents Retrieved Successfully! - Dense R")
-            print("Retrieved Documents Dense: ",retrieved_docs)
+            # print("Retrieved Documents Dense: ",retrieved_docs)
             return retrieved_docs
 
         except Exception as e:

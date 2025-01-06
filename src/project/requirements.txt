@@ -24,3 +24,4 @@ streamlit
 locust
 rank-bm25
 nltk
+gunicorn

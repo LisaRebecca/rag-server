@@ -12,7 +12,7 @@ headers = {
     'Authorization': 'Bearer xFhGltj52Gn'
 }
 
-def query_university_endpoint(query): # Provided by Sebastian - Requires Cisco FAU VPN
+async def query_university_endpoint(query): # Provided by Sebastian - Requires Cisco FAU VPN
     data = {
     "model": "TechxGenus_Mistral-Large-Instruct-2407-AWQ",
 

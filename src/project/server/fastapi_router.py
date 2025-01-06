@@ -8,8 +8,10 @@ from server.university_api import query_university_endpoint
 
 from helpers.exception import CustomException
 from helpers.logger import logging
+from helpers.smart_cache import SmartCache
 
 import sys
+import time
 
 VECTORSTORE_PATH = "vector_index_fau.faiss"
 METADATA_PATH = "metadata.json" # Mock chunked data [text, metadata[source]]
@@ -19,6 +21,7 @@ router = APIRouter()
 
 index, metadata = load_vector_db(index_file = VECTORSTORE_PATH, metadata_file = METADATA_PATH_FAU)
 
+cache = SmartCache(index = index)
 
 # Pydantic Models for request and response validation:
 class QueryRequest(BaseModel):
@@ -27,10 +30,23 @@ class QueryRequest(BaseModel):
 # Endpoints
 @router.post("/query")
 async def handle_query(request: QueryRequest):
-
-    # Step 1: Retrieval
     try:
-        retrieved_docs = RAG_Retrieval.dense_retrieval(request.query, index, metadata)
+        start_time = time.time()
+        # Check Cache
+        cached_result = cache.retrieve_from_cache(request.query)
+        if cached_result:
+            end_time = time.time()
+            logging.info("Answer retrieved from Cache!")
+            print(f"Cache hit! Finished query in: {end_time - start_time}")
+            return {
+                "from_cache": True,
+                "result": cached_result,
+            }
+        
+        print(f"Loaded index type: {type(index)}")
+        
+        # Step 1: Retrieval
+        retrieved_docs = RAG_Retrieval.dense_retrieval(request.query, index, metadata, top_k = 20)
 
         # Step 2: Generation
         rag_response = generation(request.query, retrieved_docs, tokenizer, model)
@@ -38,7 +54,9 @@ async def handle_query(request: QueryRequest):
         rag_query = f"Based on the following documents {retrieved_docs}, please asnwer this question: {request.query}."
 
         # Step 3: Call University API
-        uni_response = query_university_endpoint(rag_query)
+        uni_response = await query_university_endpoint(rag_query)
+        end_time = time.time()
+        print(f"Finished query in: {end_time - start_time}")
 
         output = (
             f"Query:\n{request.query}\n\n"
@@ -46,6 +64,12 @@ async def handle_query(request: QueryRequest):
             f"University Response:\n{uni_response}\n"
         )
         print(output)
-        return output
+
+        cache.append_to_cache(request.query, uni_response)
+        return {
+            "from_cache": False,
+            "result": output,
+        }
+    
     except Exception as e:
         raise CustomException(e, sys)
