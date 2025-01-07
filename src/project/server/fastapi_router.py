@@ -42,9 +42,7 @@ async def handle_query(request: QueryRequest):
                 "from_cache": True,
                 "result": cached_result,
             }
-        
-        print(f"Loaded index type: {type(index)}")
-        
+                
         # Step 1: Retrieval
         retrieved_docs = RAG_Retrieval.dense_retrieval(request.query, index, metadata, top_k = 20)
 
