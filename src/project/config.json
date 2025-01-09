@@ -1,0 +1,14 @@
+{
+  "llm": {
+    "techxgenus": {
+      "base_url": "http://lme49.cs.fau.de:5000/v1/chat/completions",
+      "api_key": "xFhGltj52Gn",
+      "model": "TechxGenus_Mistral-Large-Instruct-2407-AWQ"
+    },
+    "another_model": {
+      "base_url": "http://another-model-url.com/v1/chat/completions",
+      "api_key": "another-api-key",
+      "model": "Another_Model_Name"
+    }
+  }
+}
