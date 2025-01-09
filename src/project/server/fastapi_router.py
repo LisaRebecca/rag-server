@@ -48,8 +48,8 @@ METADATA_PATH_FAU = "knowledgebase/quality_html-pdf.jsonl" # FAU chunked data [t
 router = APIRouter()
 
 index, metadata = load_vector_db(index_file = VECTORSTORE_PATH, metadata_file = METADATA_PATH_FAU)
-
-cache = SmartCache(index = index)
+cache_index = faiss.IndexFlatL2(128)
+cache = SmartCache(index = cache_index)
                   
 # Pydantic Models aligned with OpenAI's Completion API
 class CompletionRequest(BaseModel):
