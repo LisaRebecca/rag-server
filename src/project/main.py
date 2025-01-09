@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from server import fastapi_router
 from server.Auth import Authenticate_User, status, timedelta, ACCESS_TOKEN_EXPIRE_MINUTES, Create_Access_Token, User, Depends, Get_Current_User
 from rag.rag import RAG
-from server.fastapi_router import index
+from server.fastapi_router import cache_index
 from helpers.smart_cache import SmartCache
 from helpers.exception import CustomException
 from pydantic import BaseModel
@@ -37,7 +37,7 @@ app.include_router(fastapi_router.router)
 
 # Initialize RAG application
 rag_app = RAG()
-cache = SmartCache(index = index)
+cache = SmartCache(index = cache_index)
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
