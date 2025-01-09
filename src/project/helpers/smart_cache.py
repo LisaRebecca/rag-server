@@ -78,7 +78,7 @@ class SmartCache:
             # print(f"Cache After Append: {self.cache}")
         except Exception as e:
             logging.info("Cache Not Updated...")
-            raise CustomException(e, sys)
+            #raise CustomException(e, sys)
 
     def retrieve_from_cache(self, query):
         try:
