@@ -33,7 +33,7 @@ app = FastAPI(
 )
 
 # Include API routers
-app.include_router(fastapi_router.router, prefix="/api", tags=["Query"])
+app.include_router(fastapi_router.router)
 
 # Initialize RAG application
 rag_app = RAG()
