@@ -95,7 +95,7 @@ async def create_completion(request: CompletionRequest, api_key: str = Depends(v
 
         # Step 3: Call University API
         rag_query = f"Based on the following documents {retrieved_docs}, please answer this question: {request.prompt}."
-        uni_response = await query_university_endpoint(rag_query)
+        uni_response = await query_university_endpoint(rag_query, 'techxgenus')
         logging.info(f"University Response: {uni_response}")
 
         end_time = time.time()
