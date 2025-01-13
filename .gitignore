@@ -130,6 +130,7 @@ src/project/vector_index_fau.faiss
 src/project/vector_index.faiss
 
 src/project/.env
+src/project/env
 
 # Prometheus
 /prometheus

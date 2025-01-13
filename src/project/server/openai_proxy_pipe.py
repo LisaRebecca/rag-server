@@ -15,7 +15,7 @@ class Pipe:
             description="Base URL for accessing OpenAI API endpoints.",
         )
         OPENAI_API_KEY: str = Field(
-            default="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",
+            default="API_KEY",
             description="API key for authenticating requests to the OpenAI API.",
         )
 
