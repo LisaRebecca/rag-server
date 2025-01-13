@@ -44,7 +44,7 @@ async def query_university_endpoint(query, model_name='techxgenus'):
                 else:
                     return f"Error: {response.status} - {await response.text()}"
         except Exception as e:
-            raise CustomException(e)
+            raise CustomException(e, sys)
 
     """try:
         response = requests.post(api_url, headers=headers, json=data, verify=False)
@@ -61,7 +61,7 @@ async def query_university_endpoint(query, model_name='techxgenus'):
         raise CustomException(e, sys)"""
     
 
-    """import httpx
+"""import httpx
 import sys
 import requests
 from helpers.logger import logging

@@ -7,6 +7,10 @@ from helpers.exception import CustomException
 from helpers.logger import logging
 from sentence_transformers import SentenceTransformer
 from nltk.tokenize import word_tokenize
+from fastapi import APIRouter, Depends, HTTPException, status, Header
+from typing import Optional, List
+
+
 
 def preprocess_knowledgebase(knowledgebase):
     corpus = []
@@ -87,7 +91,6 @@ def save_vector_db(embeddings, chunks, index_file, metadata_file):
     except Exception as e:
         raise CustomException(e, sys)
 
-
 def load_vector_db(index_file, metadata_file):
     try:
         # Check if the FAISS index file exists
@@ -109,7 +112,6 @@ def load_vector_db(index_file, metadata_file):
         return index, metadata
     except Exception as e:
         raise CustomException(e, sys)
-
 
 def create_vector_db_from_jsonl(metadata_file, index_file):
     try:
@@ -161,3 +163,26 @@ def create_vector_db_from_jsonl(metadata_file, index_file):
 
     except Exception as e:
         raise RuntimeError(f"Error creating FAISS index: {e}")
+
+def verify_api_key(
+    authorization: Optional[str] = Header(None), 
+    API_KEYS: list[str] = []
+):
+    if not isinstance(authorization, str):
+        raise ValueError("Authorization must be provided as a string.")
+
+    if authorization is None or not authorization.startswith("Bearer "):
+        logging.warning("No authorization header provided or malformed header")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    token = authorization.split(" ")[1]
+    if token not in API_KEYS:
+        logging.warning(f"Invalid API key attempted: {token}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API Key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )

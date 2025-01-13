@@ -1,7 +1,11 @@
 from fastapi import FastAPI, HTTPException, Response, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.routing import APIRoute
+from starlette.middleware.base import BaseHTTPMiddleware
 from server import fastapi_router
 from server.Auth import Authenticate_User, status, timedelta, ACCESS_TOKEN_EXPIRE_MINUTES, Create_Access_Token, User, Depends, Get_Current_User
+from server.university_api import get_model_config
 from rag.rag import RAG
 from server.fastapi_router import cache_index
 from helpers.smart_cache import SmartCache
@@ -14,6 +18,8 @@ import uvicorn
 import os
 import psutil
 import sys
+from typing import Optional, List, Dict
+
 
 # Prometheus Metrics
 REQUEST_COUNT = Counter('request_count', 'Total # of Requests')
@@ -31,6 +37,60 @@ app = FastAPI(
     description = "A FastAPI server Integrating a Vanilla RAG application",
     version = "1.0.0"
 )
+
+# CORS Configuration
+class CustomCORSMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        # Extract origin from request headers
+        origin = request.headers.get("origin", "")
+        response = await call_next(request)
+        
+        # Check if the origin is allowed
+        allowed_origins = ["http://localhost:8080", "http://localhost:8090"]
+        if origin in allowed_origins:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        
+        return response
+
+# Add the custom middleware
+app.add_middleware(CustomCORSMiddleware)
+
+# Explicitly handle OPTIONS requests for preflight
+@app.options("/v1/chat/completions")
+async def preflight_handler(request: Request):
+    origin = request.headers.get("origin", "*")
+    headers = {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Authorization, Content-Type",
+        "Access-Control-Allow-Credentials": "true",
+    }
+    logging.info(f"Handled OPTIONS request for /v1/chat/completions")
+    logging.info(f"Response Headers: {headers}")
+    return Response(content="Preflight OK", headers=headers)
+# origins = [
+#     "http://localhost:8080",  # Open WebUI URL
+#     "http://localhost:8090",  # FastAPI URL
+# ]
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["http://localhost:8080", "http://localhost:8090"],
+#     allow_credentials=True,
+#     allow_methods=["POST", "GET"],
+#     allow_headers=["Authorization", "Content-Type"],
+# )
+
+# @app.on_event("startup")
+# async def print_routes():
+#     print("Registered routes:")
+#     for route in app.routes:
+#         if isinstance(route, APIRoute):
+#             print(f"{route.name} -> {route.path} [{route.methods}]")
+
 
 # Include API routers
 app.include_router(fastapi_router.router)
@@ -64,16 +124,25 @@ async def root():
         content={"message": "Welcome to the FastAPI server"}, status_code=200
     )
 
-# Update endpoint to accept JSON data
-# @app.post("/generate-response")
-# async def generate_response(request: PromptRequest):
-#     try:
-#         # Access the prompt text with request.prompt
-#         response = await asyncio.to_thread(lambda: rag_app.generate(request.prompt))
-#         return JSONResponse(content={"response": response}, status_code=200)
-#     except Exception as e:
-#         logger.error(f"Error generating response: {e}")
-#         raise HTTPException(status_code=500, detail="Error generating response")
+# Retrieve Models
+@app.get("/v1/models") # "/v1/models" /v1/chat/completions/models
+async def list_models():
+    try:
+        model_name = "techxgenus"
+        if (model_name):
+            config = get_model_config(model_name)
+            base_url = config.get("base_url")
+            api_key = config.get("api_key")
+            model_id = config.get("model")
+            logging.info(f"Model's API KEY: {api_key}")
+            return {
+                "data": [
+                    {"id": model_id, "object": "model", "owned_by": "user"},
+                ]
+            }
+        logging.info("Models Retrieved Successfuly")
+    except Exception as e:
+        raise CustomException(e,sys)
    
 # Prometheus Health Tracking middleware 
 # @app.middleware("http")
@@ -146,8 +215,8 @@ if __name__ == "__main__":
     uvicorn.run(
         "__main__:app",
         host="127.0.0.1",
-        port=8080,  # Using a different port to avoid conflict
+        port=8090,  # Using a different port to avoid conflict
         log_level="info",
-        ssl_certfile="server.crt",  # Path to SSL certificate
-        ssl_keyfile="server.key",  # Path to SSL key
+        # ssl_certfile="server.crt",  # Path to SSL certificate
+        # ssl_keyfile="server.key",  # Path to SSL key
     )

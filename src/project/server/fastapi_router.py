@@ -1,16 +1,18 @@
-from fastapi import APIRouter
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, status, Header
+from pydantic import BaseModel, Field
 
 from rag.vanilla_RAG import generation, tokenizer, model
 from rag.rag_retrieval import RAG_Retrieval
-from helpers.utils import load_vector_db
+from helpers.utils import load_vector_db, verify_api_key
 from server.university_api import query_university_endpoint
+from typing import Optional, List, Dict
 
 from helpers.exception import CustomException
 from helpers.logger import logging
 from helpers.smart_cache import SmartCache
 
 import sys
+import faiss
 import time
 import os
 from dotenv import load_dotenv
