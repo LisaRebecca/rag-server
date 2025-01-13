@@ -1,7 +1,5 @@
 from fastapi import FastAPI, HTTPException, Response, Request
 from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.routing import APIRoute
 from starlette.middleware.base import BaseHTTPMiddleware
 from server import fastapi_router
 from server.Auth import Authenticate_User, status, timedelta, ACCESS_TOKEN_EXPIRE_MINUTES, Create_Access_Token, User, Depends, Get_Current_User
@@ -18,7 +16,8 @@ import uvicorn
 import os
 import psutil
 import sys
-from typing import Optional, List, Dict
+from pydantic import BaseModel
+
 
 
 # Prometheus Metrics

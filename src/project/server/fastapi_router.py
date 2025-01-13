@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Header
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from rag.vanilla_RAG import generation, tokenizer, model
 from rag.rag_retrieval import RAG_Retrieval
 from helpers.utils import load_vector_db, verify_api_key
 from server.university_api import query_university_endpoint
+from server.openai_proxy_pipe import Pipe
 from typing import Optional, List, Dict
 
 from helpers.exception import CustomException
@@ -48,6 +49,7 @@ METADATA_PATH = "metadata.json" # Mock chunked data [text, metadata[source]]
 METADATA_PATH_FAU = "knowledgebase/quality_html-pdf.jsonl" # FAU chunked data [text, url, file_path, chunk_no, dl_date, chunk_date, quality_score]
 
 router = APIRouter()
+proxy_pipe = Pipe()
 
 index, metadata = load_vector_db(index_file = VECTORSTORE_PATH, metadata_file = METADATA_PATH_FAU)
 cache_index = faiss.IndexFlatL2(128)
@@ -80,58 +82,65 @@ class CompletionResponse(BaseModel):
 
 @router.post("/v1/chat/completions", response_model=CompletionResponse)
 async def create_completion(request: CompletionRequest, api_key: str = Depends(verify_api_key)):
+    logging.info(f"Raw Request Body: {request.dict()}")
     logging.info("Received completion request")
     try:
-        start_time = time.time()
+            # RAG local processing
+            logging.info(f"Raw Request Body: {request.dict()}")
+            logging.info("Processing request locally with RAG")
+            start_time = time.time()
 
-        logging.info(f"Model requested: {request.model}")
-        logging.info(f"Prompt: {request.prompt}")
+            # logging.info(f"Model requested: {request.model}")
+            # logging.info(f"Prompt: {request.prompt}")
 
-        # Step 1: Retrieval using RAG
-        retrieved_docs = RAG_Retrieval.dense_retrieval(request.prompt, index, metadata, top_k=20)
-        logging.info(f"Retrieved Documents: {retrieved_docs}")
+            # Step 1: Retrieval using RAG
+            retrieved_docs = RAG_Retrieval.dense_retrieval(request.prompt, index, metadata, top_k=20)
+            logging.info(f"Retrieved Documents: {retrieved_docs}")
 
-        # Step 2: Generation using RAG
-        rag_response = generation(request.prompt, retrieved_docs, tokenizer, model)
-        logging.info(f"RAG Response: {rag_response}")
+            # Step 2: Generation using RAG
+            rag_response = generation(request.prompt, retrieved_docs, tokenizer, model)
+            logging.info(f"RAG Response: {rag_response}")
 
-        # Step 3: Call University API
-        rag_query = f"Based on the following documents {retrieved_docs}, please answer this question: {request.prompt}."
-        uni_response = await query_university_endpoint(rag_query, 'techxgenus')
-        logging.info(f"University Response: {uni_response}")
+            # Step 3: Call University API
+            rag_query = f"Based on the following documents {retrieved_docs}, please answer this question: {request.prompt}."
+            uni_response = await query_university_endpoint(rag_query, 'techxgenus')
+            logging.info(f"University Response: {uni_response}")
+            logging.info(f"Raw Request Body: {request.dict()}")
+            logging.info("Processing request locally with RAG")
+            start_time = time.time()
 
-        end_time = time.time()
-        logging.info(f"Finished query in: {end_time - start_time} seconds")
+            end_time = time.time()
+            logging.info(f"Finished query in: {end_time - start_time} seconds")
 
-        # Structure the response similar to OpenAI's CompletionResponse
-        response = CompletionResponse(
-            id=str(uuid.uuid4()),  # Generate a unique ID as needed
-            object="text_completion",
-            created=int(time.time()),
-            model=request.model,
-            choices=[
-                Choice(
-                    text=f"University Response:\n{uni_response}\n",
-                    index=0,
-                    finish_reason="stop"
-                )
-            ],
-            usage={
-                "prompt_tokens": len(request.prompt.split()),
-                "completion_tokens": len(uni_response.split()),
-                "total_tokens": len(request.prompt.split()) + len(uni_response.split())
-            }
-        )
-        output = (
-            f"Query:\n{request.prompt}\n\n"
-            # f"Our Answer:\n{rag_response}\n\n"
-            f"University Response:\n{uni_response}\n"
-        )
-        print(output)
-        cache.append_to_cache(request.prompt, uni_response)
-        #logging.info("Structured response similar to OpenAI's CompletionResponse", response)
-        
-        return response 
+            response = CompletionResponse(
+                id=str(uuid.uuid4()),  # Generate a unique ID as needed
+                object="text_completion",
+                created=int(time.time()),
+                model=request.model,
+                choices=[
+                    Choice(
+                        text=f"University Response:\n{uni_response}\n",
+                        index=0,
+                        finish_reason="stop"
+                    )
+                ],
+                usage={
+                    "prompt_tokens": len(request.prompt.split()),
+                    "completion_tokens": len(uni_response.split()),
+                    "total_tokens": len(request.prompt.split()) + len(uni_response.split())
+                }
+            )
+
+            logging.info(f"Pipe Response: {response}")
+            output = (
+                f"Query:\n{request.prompt}\n\n"
+                # f"Our Answer:\n{rag_response}\n\n"
+                f"University Response:\n{uni_response}\n"
+            )
+            print(output)
+            cache.append_to_cache(request.prompt, uni_response)
+            #logging.info("Structured response similar to OpenAI's CompletionResponse", response)
+            return CompletionResponse(**response)
 
     except CustomException as ce:
         logging.error(f"Custom exception occurred: {ce}")
