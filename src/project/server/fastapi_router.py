@@ -55,92 +55,136 @@ index, metadata = load_vector_db(index_file = VECTORSTORE_PATH, metadata_file = 
 cache_index = faiss.IndexFlatL2(128)
 cache = SmartCache(index = cache_index)
                   
-# Pydantic Models aligned with OpenAI's Completion API
-class CompletionRequest(BaseModel):
-    model: Optional[str] = Field(default="default-model", description="Model to use for completion")
-    prompt: str = Field(..., description="The prompt to generate completions for")
-    max_tokens: Optional[int] = Field(default=100, description="The maximum number of tokens to generate")
-    temperature: Optional[float] = Field(default=0.7, description="Sampling temperature")
-    top_p: Optional[float] = Field(default=1.0, description="Nucleus sampling probability")
-    n: Optional[int] = Field(default=1, description="Number of completions to generate")
-    stop: Optional[List[str]] = Field(default=None, description="Up to 4 sequences where the API will stop generating further tokens")
-    echo: Optional[bool] = Field(default=False, description="Whether to echo the prompt in the response")
+# --------------------------------------------------------------
+# 1) Define new models to match your incoming payload
+# --------------------------------------------------------------
+class Message(BaseModel):
+    id: Optional[str] = None
+    parentId: Optional[str] = None
+    childrenIds: Optional[List[str]] = None
+    role: Optional[str] = None
+    content: Optional[str] = None
+    model: Optional[str] = None
+    modelName: Optional[str] = None
+    modelIdx: Optional[int] = None
+    userContext: Optional[Any] = None
+    timestamp: Optional[int] = None
+    done: Optional[bool] = None
+    
+    class Config:
+        extra = Extra.allow  # ignore any extra fields in messages
 
-class Choice(BaseModel):
-    text: str
+class CompletionRequest(BaseModel):
+    model: Optional[str] = Field(default="default-model")
+    prompt: Optional[str] = None
+    messages: Optional[List[Message]] = None
+    type: Optional[str] = None
+    stream: Optional[bool] = None
+
+    # If you still want max_tokens, temperature, etc., keep them:
+    max_tokens: Optional[int] = 100
+    temperature: Optional[float] = 0.7
+    top_p: Optional[float] = 1.0
+
+    class Config:
+        extra = Extra.allow  # allow any additional fields (params, background_tasks, etc.)
+
+# --------------------------------------------------------------
+# 2) Define your Chat Completion Response models
+# --------------------------------------------------------------
+class ChatMessageResponse(BaseModel):
+    role: str
+    content: str
+
+class ChatChoiceResponse(BaseModel):
     index: int
-    logprobs: Optional[dict] = None
+    message: ChatMessageResponse
     finish_reason: Optional[str] = None
 
-class CompletionResponse(BaseModel):
+class ChatCompletionResponse(BaseModel):
     id: str
     object: str
     created: int
     model: str
-    choices: List[Choice]
-    usage: Optional[dict] = None
+    choices: List[ChatChoiceResponse]
+    usage: Optional[Dict[str, int]] = None
 
-@router.post("/v1/chat/completions", response_model=CompletionResponse)
-async def create_completion(request: CompletionRequest, api_key: str = Depends(verify_api_key)):
-    logging.info(f"Raw Request Body: {request.dict()}")
+# --------------------------------------------------------------
+# 3) Main endpoint: parse either request.prompt or from messages
+# --------------------------------------------------------------
+@router.post("/v1/chat/completions", response_model=ChatCompletionResponse)
+async def create_completion(
+    request: CompletionRequest,
+    api_key: str = Depends(verify_api_key)  # or remove if you don't want auth
+):
     logging.info("Received completion request")
+
+    # 3A) Decide how to get user_prompt
+    user_prompt = request.prompt if request.prompt else ""
+
+    # If you prefer to get the last "user" message if prompt is empty
+    if (not user_prompt) and request.messages:
+        for msg in reversed(request.messages):
+            if msg.role and msg.role.lower() == "user" and msg.content:
+                user_prompt = msg.content
+                break
+
+    if not user_prompt:
+        raise HTTPException(
+            status_code=422,
+            detail="No 'prompt' or user message content found in the request."
+        )
+
     try:
-            # RAG local processing
-            logging.info(f"Raw Request Body: {request.dict()}")
-            logging.info("Processing request locally with RAG")
-            start_time = time.time()
+        start_time = time.time()
 
-            # logging.info(f"Model requested: {request.model}")
-            # logging.info(f"Prompt: {request.prompt}")
+        logging.info(f"Model requested: {request.model}")
+        logging.info(f"User's prompt: {user_prompt}")
 
-            # Step 1: Retrieval using RAG
-            retrieved_docs = RAG_Retrieval.dense_retrieval(request.prompt, index, metadata, top_k=20)
-            logging.info(f"Retrieved Documents: {retrieved_docs}")
+        # Step 1: RAG retrieval
+        retrieved_docs = RAG_Retrieval.dense_retrieval(user_prompt, index, metadata, top_k=20)
+        logging.info(f"Retrieved Documents: {retrieved_docs}")
 
-            # Step 2: Generation using RAG
-            rag_response = generation(request.prompt, retrieved_docs, tokenizer, model)
-            logging.info(f"RAG Response: {rag_response}")
+        # Step 2: RAG generation
+        rag_response = generation(user_prompt, retrieved_docs, tokenizer, model)
+        logging.info(f"RAG Response: {rag_response}")
 
-            # Step 3: Call University API
-            rag_query = f"Based on the following documents {retrieved_docs}, please answer this question: {request.prompt}."
-            uni_response = await query_university_endpoint(rag_query, 'techxgenus')
-            logging.info(f"University Response: {uni_response}")
-            logging.info(f"Raw Request Body: {request.dict()}")
-            logging.info("Processing request locally with RAG")
-            start_time = time.time()
+        # Step 3: Call University API (or skip if you want)
+        rag_query = f"Based on the following documents {retrieved_docs}, please answer this question: {user_prompt}."
+        uni_response = await query_university_endpoint(rag_query, 'techxgenus')
+        logging.info(f"University Response: {uni_response}")
 
-            end_time = time.time()
-            logging.info(f"Finished query in: {end_time - start_time} seconds")
+        end_time = time.time()
+        logging.info(f"Finished query in: {end_time - start_time} seconds")
 
-            response = CompletionResponse(
-                id=str(uuid.uuid4()),  # Generate a unique ID as needed
-                object="text_completion",
-                created=int(time.time()),
-                model=request.model,
-                choices=[
-                    Choice(
-                        text=f"University Response:\n{uni_response}\n",
-                        index=0,
-                        finish_reason="stop"
-                    )
-                ],
-                usage={
-                    "prompt_tokens": len(request.prompt.split()),
-                    "completion_tokens": len(uni_response.split()),
-                    "total_tokens": len(request.prompt.split()) + len(uni_response.split())
-                }
-            )
+        # Prepare the response in Chat Completion format
+        response = ChatCompletionResponse(
+            id=str(uuid.uuid4()),
+            object="chat.completion",
+            created=int(time.time()),
+            model=request.model or "default-model",
+            choices=[
+                ChatChoiceResponse(
+                    index=0,
+                    message=ChatMessageResponse(
+                        role="assistant",
+                        content=f"University Response:\n{uni_response}\n"
+                    ),
+                    finish_reason="stop"
+                )
+            ],
+            usage={
+                "prompt_tokens": len(user_prompt.split()),
+                "completion_tokens": len(uni_response.split()),
+                "total_tokens": len(user_prompt.split()) + len(uni_response.split())
+            }
+        )
+        
+        # Optionally cache
+        cache.append_to_cache(user_prompt, uni_response)
+        print(f"Query:\n{user_prompt}\n\nUniversity Response:\n{uni_response}\n")
 
-            logging.info(f"Pipe Response: {response}")
-            output = (
-                f"Query:\n{request.prompt}\n\n"
-                # f"Our Answer:\n{rag_response}\n\n"
-                f"University Response:\n{uni_response}\n"
-            )
-            print(output)
-            cache.append_to_cache(request.prompt, uni_response)
-            #logging.info("Structured response similar to OpenAI's CompletionResponse", response)
-            return CompletionResponse(**response)
+        return response
 
     except CustomException as ce:
         logging.error(f"Custom exception occurred: {ce}")
