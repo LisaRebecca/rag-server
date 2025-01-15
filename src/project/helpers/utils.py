@@ -186,3 +186,13 @@ def verify_api_key(
             detail="Invalid API Key",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+def load_all_model_configs(config_path: str):
+   
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Config file not found at path: {config_path}")
+    
+    with open(config_path, 'r') as f:
+        configs = json.load(f)
+    
+    return configs
