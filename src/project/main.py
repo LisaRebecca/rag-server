@@ -8,6 +8,7 @@ from rag.rag import RAG
 from server.fastapi_router import cache_index
 from helpers.smart_cache import SmartCache
 from helpers.exception import CustomException
+from helpers.utils import load_all_model_configs
 from pydantic import BaseModel
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
 import openai
@@ -127,21 +128,41 @@ async def root():
 @app.get("/v1/models") # "/v1/models" /v1/chat/completions/models
 async def list_models():
     try:
-        model_name = "techxgenus"
-        if (model_name):
-            config = get_model_config(model_name)
+        # Path to your config.json file
+        CONFIG_PATH = "config.json"
+        
+        # Load all model configurations
+        all_configs = load_all_model_configs(CONFIG_PATH)
+        llm_configs = all_configs.get("llm", {})
+        models_data = []
+        for model_name, config in llm_configs.items():
             base_url = config.get("base_url")
             api_key = config.get("api_key")
             model_id = config.get("model")
-            logging.info(f"Model's API KEY: {api_key}")
-            return {
-                "data": [
-                    {"id": model_id, "object": "model", "owned_by": "user"},
-                ]
-            }
-        logging.info("Models Retrieved Successfuly")
-    except Exception as e:
-        raise CustomException(e,sys)
+            logging.info(f"Model '{model_name}' - API KEY: {api_key}, Base URL: {base_url}, Model ID: {model_id}")
+            models_data.append({
+                "id": model_id,
+                "object": "model",
+                "owned_by": "user",
+                "name": model_name,  # Optionally include the model name
+                "base_url": base_url  # Optionally include other details
+            })
+        
+        return {
+            "data": models_data
+        }
+    except FileNotFoundError as fnf_error:
+        logging.error(f"Config file not found: {fnf_error}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Configuration file not found.",
+        )
+    except json.JSONDecodeError as json_error:
+        logging.error(f"Error decoding JSON: {json_error}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error decoding configuration file.",
+        )
    
 # Prometheus Health Tracking middleware 
 # @app.middleware("http")
