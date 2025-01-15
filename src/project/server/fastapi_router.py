@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Header
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, Extra
+
 
 from rag.vanilla_RAG import generation, tokenizer, model
 from rag.rag_retrieval import RAG_Retrieval
 from helpers.utils import load_vector_db, verify_api_key
 from server.university_api import query_university_endpoint
 from server.openai_proxy_pipe import Pipe
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 
 from helpers.exception import CustomException
 from helpers.logger import logging
@@ -44,9 +45,9 @@ def verify_api_key(authorization: Optional[str] = Header(None)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-VECTORSTORE_PATH = "vector_index_fau.faiss"
+VECTORSTORE_PATH = "D:/Shenime/Shenimet/Data_Science/Master_thesis/github_2/rag-server/src/project/vector_index_fau.faiss"
 METADATA_PATH = "metadata.json" # Mock chunked data [text, metadata[source]]
-METADATA_PATH_FAU = "knowledgebase/quality_html-pdf.jsonl" # FAU chunked data [text, url, file_path, chunk_no, dl_date, chunk_date, quality_score]
+METADATA_PATH_FAU = "D:/Shenime/Shenimet/Data_Science/Master_thesis/github_2/rag-server/src/project/quality_html-pdf.jsonl" # FAU chunked data [text, url, file_path, chunk_no, dl_date, chunk_date, quality_score]
 
 router = APIRouter()
 proxy_pipe = Pipe()
@@ -118,7 +119,7 @@ async def create_completion(
     api_key: str = Depends(verify_api_key)  # or remove if you don't want auth
 ):
     logging.info("Received completion request")
-
+    logging.info(request.model)
     # 3A) Decide how to get user_prompt
     user_prompt = request.prompt if request.prompt else ""
 
@@ -140,23 +141,26 @@ async def create_completion(
 
         logging.info(f"Model requested: {request.model}")
         logging.info(f"User's prompt: {user_prompt}")
+        if request.model == "TechxGenus_Mistral-Large-Instruct-2407-AWQ":          
+            logging.info("Response with RAG")       
+            # Step 1: RAG retrieval
+            retrieved_docs = RAG_Retrieval.dense_retrieval(user_prompt, index, metadata, top_k=20)
+            logging.info(f"Retrieved Documents: {retrieved_docs}")
 
-        # Step 1: RAG retrieval
-        retrieved_docs = RAG_Retrieval.dense_retrieval(user_prompt, index, metadata, top_k=20)
-        logging.info(f"Retrieved Documents: {retrieved_docs}")
+            # Step 2: RAG generation
+            rag_response = generation(user_prompt, retrieved_docs, tokenizer, model)
+            logging.info(f"RAG Response: {rag_response}")
 
-        # Step 2: RAG generation
-        rag_response = generation(user_prompt, retrieved_docs, tokenizer, model)
-        logging.info(f"RAG Response: {rag_response}")
+            # Step 3: Call University API (or skip if you want)
+            rag_query = f"Based on the following documents {retrieved_docs}, please answer this question: {user_prompt}."
+            uni_response = await query_university_endpoint(rag_query, 'FAU LLM 2.0')
+            logging.info(f"University Response: {uni_response}")
 
-        # Step 3: Call University API (or skip if you want)
-        rag_query = f"Based on the following documents {retrieved_docs}, please answer this question: {user_prompt}."
-        uni_response = await query_university_endpoint(rag_query, 'techxgenus')
-        logging.info(f"University Response: {uni_response}")
-
-        end_time = time.time()
-        logging.info(f"Finished query in: {end_time - start_time} seconds")
-
+            end_time = time.time()
+            logging.info(f"Finished query in: {end_time - start_time} seconds")
+        else:
+            logging.info("Response without RAG")
+            uni_response = await query_university_endpoint(user_prompt, 'FAU LLM 2.0')
         # Prepare the response in Chat Completion format
         response = ChatCompletionResponse(
             id=str(uuid.uuid4()),
