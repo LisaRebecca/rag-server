@@ -45,12 +45,12 @@ def verify_api_key(authorization: Optional[str] = Header(None)):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-VECTORSTORE_PATH = "D:/Shenime/Shenimet/Data_Science/Master_thesis/github_2/rag-server/src/project/vector_index_fau.faiss"
+VECTORSTORE_PATH = "vector_index_fau.faiss"
 METADATA_PATH = "metadata.json" # Mock chunked data [text, metadata[source]]
-METADATA_PATH_FAU = "D:/Shenime/Shenimet/Data_Science/Master_thesis/github_2/rag-server/src/project/quality_html-pdf.jsonl" # FAU chunked data [text, url, file_path, chunk_no, dl_date, chunk_date, quality_score]
+METADATA_PATH_FAU = "knowledgebase/quality_html-pdf.jsonl" # FAU chunked data [text, url, file_path, chunk_no, dl_date, chunk_date, quality_score]
 
 router = APIRouter()
-proxy_pipe = Pipe()
+# proxy_pipe = Pipe()
 
 index, metadata = load_vector_db(index_file = VECTORSTORE_PATH, metadata_file = METADATA_PATH_FAU)
 cache_index = faiss.IndexFlatL2(128)

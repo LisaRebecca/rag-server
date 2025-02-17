@@ -4,7 +4,6 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from server import fastapi_router
 from server.Auth import Authenticate_User, status, timedelta, ACCESS_TOKEN_EXPIRE_MINUTES, Create_Access_Token, User, Depends, Get_Current_User
 from server.university_api import get_model_config
-from rag.rag import RAG
 from server.fastapi_router import cache_index
 from helpers.smart_cache import SmartCache
 from helpers.exception import CustomException
@@ -17,8 +16,8 @@ import uvicorn
 import os
 import psutil
 import sys
+import json
 from pydantic import BaseModel
-
 
 
 # Prometheus Metrics
@@ -71,32 +70,12 @@ async def preflight_handler(request: Request):
     logging.info(f"Handled OPTIONS request for /v1/chat/completions")
     logging.info(f"Response Headers: {headers}")
     return Response(content="Preflight OK", headers=headers)
-# origins = [
-#     "http://localhost:8080",  # Open WebUI URL
-#     "http://localhost:8090",  # FastAPI URL
-# ]
-
-# app.add_middleware(
-#     CORSMiddleware,
-#     allow_origins=["http://localhost:8080", "http://localhost:8090"],
-#     allow_credentials=True,
-#     allow_methods=["POST", "GET"],
-#     allow_headers=["Authorization", "Content-Type"],
-# )
-
-# @app.on_event("startup")
-# async def print_routes():
-#     print("Registered routes:")
-#     for route in app.routes:
-#         if isinstance(route, APIRoute):
-#             print(f"{route.name} -> {route.path} [{route.methods}]")
 
 
 # Include API routers
 app.include_router(fastapi_router.router)
 
 # Initialize RAG application
-rag_app = RAG()
 cache = SmartCache(index = cache_index)
 
 # Set up logging
