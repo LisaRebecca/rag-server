@@ -25,3 +25,6 @@ locust
 rank-bm25
 nltk
 gunicorn
+python-box==6.0.2
+ensure
+vllm

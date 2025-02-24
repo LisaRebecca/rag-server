@@ -16,4 +16,4 @@ RUN apt update && apt install -y curl
 EXPOSE 8090
 
 # Command to run the application
-CMD ["python", "-m", "uvicorn", "fastapi_RAG_service.app.main:app", "--host", "0.0.0.0", "--port", "8090", "--workers", "2"]
+CMD ["python", "-m", "uvicorn", "fastapi_RAG_service.app.main:app", "--host", "0.0.0.0", "--port", "8090", "--workers", "1"]

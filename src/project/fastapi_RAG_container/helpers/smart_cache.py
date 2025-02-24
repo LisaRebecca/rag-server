@@ -1,6 +1,6 @@
-from rag.rag_retrieval import retriever
-from helpers.exception import CustomException
-from helpers.logger import logging
+from fastapi_RAG_container.rag.rag_retrieval import retriever
+from fastapi_RAG_container.helpers.exception import CustomException
+from fastapi_RAG_container.helpers.logger import logging
 import faiss
 from faiss import IndexFlatL2
 import numpy as np

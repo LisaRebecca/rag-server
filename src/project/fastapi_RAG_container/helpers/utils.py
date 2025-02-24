@@ -1,16 +1,34 @@
 import os
 import sys
 import json
+import yaml
 import numpy as np
 import faiss
-from helpers.exception import CustomException
-from helpers.logger import logging
+from fastapi_RAG_container.helpers.exception import CustomException
+from fastapi_RAG_container.helpers.logger import logging
 from sentence_transformers import SentenceTransformer
 from nltk.tokenize import word_tokenize
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from typing import Optional, List
+from ensure import ensure_annotations
+from box import config_box
+from pathlib import Path
+from box.exceptions import BoxValueError
 
-
+@ensure_annotations
+def read_yaml(path_to_yaml: Path) -> config_box.ConfigBox:
+    """
+    Read Yaml file and return Configbox type
+    """
+    try:
+        with open(path_to_yaml) as yaml_file:
+            content = yaml.safe_load(yaml_file)
+            logging.info(f"Yaml file: {path_to_yaml} loadad successfully!")
+            return config_box.ConfigBox(content)
+    except BoxValueError:
+        raise ValueError("Yaml file is empty")
+    except Exception as e:
+        raise e
 
 def preprocess_knowledgebase(knowledgebase):
     corpus = []

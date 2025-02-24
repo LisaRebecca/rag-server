@@ -1,14 +1,14 @@
 from fastapi import FastAPI, HTTPException, Response, Request
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from server import fastapi_router
-from server import embedding_service
-from server.Auth import Authenticate_User, status, timedelta, ACCESS_TOKEN_EXPIRE_MINUTES, Create_Access_Token, User, Depends, Get_Current_User
-from server.university_api import get_model_config
-from server.fastapi_router import cache_index
-from helpers.smart_cache import SmartCache
-from helpers.exception import CustomException
-from helpers.utils import load_all_model_configs
+from fastapi_RAG_container.server import fastapi_router
+from fastapi_RAG_container.server import embedding_service
+from fastapi_RAG_container.server.Auth import Authenticate_User, status, timedelta, ACCESS_TOKEN_EXPIRE_MINUTES, Create_Access_Token, User, Depends, Get_Current_User
+from fastapi_RAG_container.server.university_api import get_model_config
+from fastapi_RAG_container.server.fastapi_router import cache_index
+from fastapi_RAG_container.helpers.smart_cache import SmartCache
+from fastapi_RAG_container.helpers.exception import CustomException
+from fastapi_RAG_container.helpers.utils import load_all_model_configs
 from pydantic import BaseModel
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
 import openai
@@ -109,7 +109,7 @@ async def root():
 async def list_models():
     try:
         # Path to your config.json file
-        CONFIG_PATH = "config.json"
+        CONFIG_PATH = "fastapi_RAG_container/config.json"
         
         # Load all model configurations
         all_configs = load_all_model_configs(CONFIG_PATH)

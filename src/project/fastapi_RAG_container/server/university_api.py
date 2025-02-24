@@ -1,14 +1,14 @@
 import json
-import requests
 import sys
 import logging
 import aiohttp
+import time
 
 class CustomException(Exception):
     pass
 
 # Load configuration
-with open('config.json') as config_file:
+with open('fastapi_RAG_container/config.json') as config_file:
     config = json.load(config_file)
 
 # Function to get model configuration
@@ -17,6 +17,7 @@ def get_model_config(model_name):
     return config['llm'].get(model_name)
 
 async def query_university_endpoint(query, model_name='techxgenus'):
+    start_time = time.time()
     model_config = get_model_config(model_name)
     if not model_config:
         raise CustomException(f"Model configuration for '{model_name}' not found")
@@ -38,6 +39,9 @@ async def query_university_endpoint(query, model_name='techxgenus'):
                     response_data = await response.json()
                     if 'choices' in response_data and len(response_data['choices']) > 0:
                         answer = response_data['choices'][0]['message']['content']
+                        end_time = time.time()
+                        elapsed_time = end_time - start_time
+                        print(f"Generation took {elapsed_time:.4f} seconds")
                     else:
                         answer = 'No answer found in the response'
                     return answer
@@ -45,59 +49,3 @@ async def query_university_endpoint(query, model_name='techxgenus'):
                     return f"Error: {response.status} - {await response.text()}"
         except Exception as e:
             raise CustomException(e, sys)
-
-    """try:
-        response = requests.post(api_url, headers=headers, json=data, verify=False)
-        if response.status_code == 200:
-            response_data = response.json()
-            if 'choices' in response_data and len(response_data['choices']) > 0:
-                answer = response_data['choices'][0]['message']['content']
-            else:
-                answer = 'No answer found in the response'
-            return answer
-        else:
-            return f"Error: {response.status_code} - {response.text}"
-    except Exception as e:
-        raise CustomException(e, sys)"""
-    
-
-"""import httpx
-import sys
-import requests
-from helpers.logger import logging
-from helpers.exception import CustomException
-
-api_url = 'http://lme49.cs.fau.de:5000/v1/chat/completions'
-
-headers = {
-    'Content-Type': 'application/json',
-
-    'Authorization': 'Bearer xFhGltj52Gn'
-}
-
-async def query_university_endpoint(query): # Provided by Sebastian - Requires Cisco FAU VPN
-    data = {
-    "model": "TechxGenus_Mistral-Large-Instruct-2407-AWQ",
-
-    "messages": [{"role": "user", "content": query}]
-    }
-
-    try:
-        response = requests.post(api_url, headers=headers, json=data, verify=False)
-
-        if response.status_code == 200:
-            response_data = response.json()
-
-            if 'choices' in response_data and len(response_data['choices']) > 0:
-                answer = response_data['choices'][0]['message']['content']
-
-            else:
-                answer = 'No answer found in the response'
-
-            return answer
-        
-        else:
-            return f"Error: {response.status_code} - {response.text}"
-        
-    except Exception as e:
-        raise CustomException(e, sys)"""

@@ -1,5 +1,5 @@
 import sys
-from helpers.logger import logging
+from fastapi_RAG_container.helpers.logger import logging
 
 def error_message_details(error, error_detail: sys):
     _, _, exc_tb = error_detail.exc_info()

@@ -4,12 +4,12 @@ torch.set_num_threads(1)
 torch.set_num_interop_threads(1)
 import os
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
-from helpers.exception import CustomException
-from helpers.logger import logging
+from fastapi_RAG_container.helpers.exception import CustomException
+from fastapi_RAG_container.helpers.logger import logging
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-from helpers.utils import load_vector_db
+from fastapi_RAG_container.helpers.utils import load_vector_db
 
-from rag.rag_retrieval import RAG_Retrieval
+from fastapi_RAG_container.rag.rag_retrieval import RAG_Retrieval
 
 VECTORSTORE_PATH = "vector_index_fau.faiss"
 METADATA_PATH_FAU = "knowledgebase/quality_html-pdf.jsonl" # FAU chunked data [text, url, file_path, chunk_no, dl_date, chunk_date, quality_score]

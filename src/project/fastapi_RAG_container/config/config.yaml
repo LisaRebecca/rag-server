@@ -1,0 +1,7 @@
+embedding_model:
+  transformer: sentence-transformers/all-mpnet-base-v2
+  openai_api_key: 
+  openai_api_base: http://localhost:8001/v1/embeddings
+  # openai_api_base: http://localhost:11434/v1/ 
+  # openai_api_base: http://localhost:8000/v1
+  

@@ -1,19 +1,19 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Header
-from pydantic import BaseModel, Field, ValidationError, Extra
+from pydantic import BaseModel, Field, Extra
 
 
-from rag.vanilla_RAG import generation, tokenizer, model
-from rag.rag_retrieval import RAG_Retrieval
-from helpers.utils import load_vector_db, verify_api_key
-from server.university_api import query_university_endpoint
-from server.openai_proxy_pipe import Pipe
+from fastapi_RAG_container.rag.vanilla_RAG import generation, tokenizer, model
+from fastapi_RAG_container.rag.rag_retrieval import RAG_Retrieval
+from fastapi_RAG_container.helpers.utils import load_vector_db, verify_api_key
+from fastapi_RAG_container.server.university_api import query_university_endpoint
+from fastapi_RAG_container.server.embedding_service import embedding_model_instance
 from typing import Optional, List, Dict, Any
 
-from helpers.exception import CustomException
-from helpers.logger import logging
-from helpers.smart_cache import SmartCache
+from fastapi_RAG_container.helpers.exception import CustomException
+from fastapi_RAG_container.helpers.logger import logging
+from fastapi_RAG_container.helpers.smart_cache import SmartCache
 
-import sys
+import numpy as np
 import faiss
 import time
 import os
@@ -44,13 +44,12 @@ def verify_api_key(authorization: Optional[str] = Header(None)):
             detail="Invalid API Key",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-VECTORSTORE_PATH = "vector_index_fau.faiss"
+    
+VECTORSTORE_PATH = "fastapi_RAG_container/vector_index_fau.faiss"
 METADATA_PATH = "metadata.json" # Mock chunked data [text, metadata[source]]
-METADATA_PATH_FAU = "knowledgebase/quality_html-pdf.jsonl" # FAU chunked data [text, url, file_path, chunk_no, dl_date, chunk_date, quality_score]
+METADATA_PATH_FAU = "fastapi_RAG_container/knowledgebase/quality_html-pdf.jsonl" # FAU chunked data [text, url, file_path, chunk_no, dl_date, chunk_date, quality_score]
 
 router = APIRouter()
-# proxy_pipe = Pipe()
 
 index, metadata = load_vector_db(index_file = VECTORSTORE_PATH, metadata_file = METADATA_PATH_FAU)
 cache_index = faiss.IndexFlatL2(128)
@@ -142,21 +141,49 @@ async def create_completion(
         logging.info(f"Model requested: {request.model}")
         logging.info(f"User's prompt: {user_prompt}")
         if request.model == "TechxGenus_Mistral-Large-Instruct-2407-AWQ":          
-            logging.info("Response with RAG")       
+            logging.info("Response with RAG")
+
             # Step 1: RAG retrieval
-            retrieved_docs = RAG_Retrieval.dense_retrieval(user_prompt, index, metadata, top_k=20)
+            # async with httpx.AsyncClient() as client:
+            #     response = await client.post("http://localhost:8090/embed", json = {"text": user_prompt})
+            #     response.raise_for_status()
+            #     embedding_data = response.json()
+
+            # # Ensure embedding data is extracted correctly
+            # if isinstance(embedding_data, dict) and "embedding" in embedding_data:
+            #     embedding = embedding_data["embedding"]
+            # elif isinstance(embedding_data, list):
+            #     embedding = embedding_data[0]
+            # else:
+            #     raise ValueError(f"Unexpected embedding response format: {embedding_data}")
+
+            # query_embedding = np.array(embedding, dtype="float32").reshape(1, -1)
+
+            print(f"User Prompt: {user_prompt}")
+
+            query_embedding = embedding_model_instance.get_embedding(user_prompt)
+
+            query_embedding = np.array(query_embedding, dtype="float32").reshape(1, -1)
+
+            print(f"Query Embedding Type: {type(query_embedding)}, Shape: {np.shape(query_embedding)}")
+
+            print(f"Is NumPy array? {isinstance(query_embedding, np.ndarray)}")
+
+            retrieved_docs = await RAG_Retrieval.dense_retrieval(query_embedding, index, metadata, top_k=20)
             logging.info(f"Retrieved Documents: {retrieved_docs}")
 
-            # Step 2: RAG generation
+            # Step 2: RAG generation - Ours
             rag_response = generation(user_prompt, retrieved_docs, tokenizer, model)
             logging.info(f"RAG Response: {rag_response}")
 
             # Step 3: Call University API (or skip if you want)
             rag_query = f"Based on the following documents {retrieved_docs}, please answer this question: {user_prompt}."
             uni_response = await query_university_endpoint(rag_query, 'FAU LLM 2.0')
-            logging.info(f"University Response: {uni_response}")
+            logging.info(f"{uni_response}")
 
             end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"Response took {elapsed_time:.4f} seconds")
             logging.info(f"Finished query in: {end_time - start_time} seconds")
         else:
             logging.info("Response without RAG")
@@ -172,7 +199,7 @@ async def create_completion(
                     index=0,
                     message=ChatMessageResponse(
                         role="assistant",
-                        content=f"University Response:\n{uni_response}\n"
+                        content=f"{uni_response}\n"
                     ),
                     finish_reason="stop"
                 )

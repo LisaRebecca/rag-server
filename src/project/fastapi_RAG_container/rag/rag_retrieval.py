@@ -2,13 +2,16 @@ from sentence_transformers import SentenceTransformer
 from rank_bm25 import BM25Okapi
 from nltk.tokenize import word_tokenize
 
-from helpers.exception import CustomException
-from helpers.logger import logging
-from helpers.utils import preprocess_knowledgebase, dense_embeddings, remove_duplicates, filter_results
+from fastapi_RAG_container.helpers.exception import CustomException
+from fastapi_RAG_container.helpers.logger import logging
+from fastapi_RAG_container.helpers.utils import preprocess_knowledgebase, dense_embeddings, remove_duplicates, filter_results
 from sklearn.preprocessing import MinMaxScaler
 
 import sys
+import time
 import numpy as np
+
+import httpx
 
 retriever = SentenceTransformer("sentence-transformers/all-mpnet-base-v2") # Hugging Face model
 
@@ -28,21 +31,22 @@ class RAG_Retrieval:
     def tokenized_corpus(metadata):
         return preprocess_knowledgebase(metadata)
 
-    def dense_retrieval(query, index, metadata, top_k):
+    async def dense_retrieval(query_embedding, index, metadata, top_k):
         try:
-            query_embedding = retriever.encode([query])
+            start_time = time.time()  # Start timing
+            # query_embedding = retriever.encode([query])
 
-            _, indices = index.search(np.array(query_embedding, dtype = "float32"), top_k) # Nearest Neighbor
+            _, indices = index.search(query_embedding, top_k)
 
             retrieved_docs = [metadata[i]["text"] for i in indices[0]]
 
-            # print("Retrieved Documents:", retrieved_docs)
-
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            print(f"Dense retrieval took {elapsed_time:.4f} seconds")
             logging.info("Documents Retrieved Successfully! - Dense R")
-            # print("Retrieved Documents Dense: ",retrieved_docs)
             return retrieved_docs
-
         except Exception as e:
+            print(f"Error generating embedding: {e}")
             raise CustomException(e, sys)
         
     def sparse_retrieval(query, metadata, top_k):
