@@ -8,7 +8,7 @@ class CustomException(Exception):
     pass
 
 # Load configuration
-with open('fastapi_RAG_container/config.json') as config_file:
+with open('config.json') as config_file:
     config = json.load(config_file)
 
 # Function to get model configuration

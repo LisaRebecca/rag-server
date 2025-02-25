@@ -2,16 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, status, Header
 from pydantic import BaseModel, Field, Extra
 
 
-from fastapi_RAG_container.rag.vanilla_RAG import generation, tokenizer, model
-from fastapi_RAG_container.rag.rag_retrieval import RAG_Retrieval
-from fastapi_RAG_container.helpers.utils import load_vector_db, verify_api_key
-from fastapi_RAG_container.server.university_api import query_university_endpoint
-from fastapi_RAG_container.server.embedding_service import embedding_model_instance
+from rag.vanilla_RAG import generation, tokenizer, model
+from rag.rag_retrieval import RAG_Retrieval
+from helpers.utils import load_vector_db, verify_api_key
+from server.university_api import query_university_endpoint
+# from server.embedding_service import embedding_model_instance
+from embedding_service.app.main import embedding_model_instance
 from typing import Optional, List, Dict, Any
 
-from fastapi_RAG_container.helpers.exception import CustomException
-from fastapi_RAG_container.helpers.logger import logging
-from fastapi_RAG_container.helpers.smart_cache import SmartCache
+from helpers.exception import CustomException
+from helpers.logger import logging
+from helpers.smart_cache import SmartCache
 
 import numpy as np
 import faiss
@@ -45,9 +46,9 @@ def verify_api_key(authorization: Optional[str] = Header(None)):
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-VECTORSTORE_PATH = "fastapi_RAG_container/vector_index_fau.faiss"
+VECTORSTORE_PATH = "vector_index_fau.faiss"
 METADATA_PATH = "metadata.json" # Mock chunked data [text, metadata[source]]
-METADATA_PATH_FAU = "fastapi_RAG_container/knowledgebase/quality_html-pdf.jsonl" # FAU chunked data [text, url, file_path, chunk_no, dl_date, chunk_date, quality_score]
+METADATA_PATH_FAU = "knowledgebase/quality_html-pdf.jsonl" # FAU chunked data [text, url, file_path, chunk_no, dl_date, chunk_date, quality_score]
 
 router = APIRouter()
 

@@ -2,9 +2,9 @@ from sentence_transformers import SentenceTransformer
 from rank_bm25 import BM25Okapi
 from nltk.tokenize import word_tokenize
 
-from fastapi_RAG_container.helpers.exception import CustomException
-from fastapi_RAG_container.helpers.logger import logging
-from fastapi_RAG_container.helpers.utils import preprocess_knowledgebase, dense_embeddings, remove_duplicates, filter_results
+from helpers.exception import CustomException
+from helpers.logger import logging
+from helpers.utils import preprocess_knowledgebase, dense_embeddings, remove_duplicates, filter_results
 from sklearn.preprocessing import MinMaxScaler
 
 import sys

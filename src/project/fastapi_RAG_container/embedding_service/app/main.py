@@ -1,12 +1,10 @@
 import sys
 from sentence_transformers import SentenceTransformer
 from helpers.exception import CustomException
-from fastapi.responses import JSONResponse
-from helpers.logger import logging
 from pydantic import BaseModel
 from dataclasses import dataclass
 from pathlib import Path
-from fastapi import APIRouter, HTTPException
+from fastapi import HTTPException
 import uvicorn
 import requests
 import numpy as np
@@ -19,7 +17,6 @@ from helpers.utils import read_yaml
 from openai import OpenAI
 from typing import List
 
-router = APIRouter()
 app = FastAPI()
 
 @dataclass(frozen = True)
@@ -62,37 +59,6 @@ class EmbeddingModel:
             api_key = self.config.openai_api_key,
             base_url = self.config.openai_api_base
         )
-
-    def generate_embedding(self, data: dict):
-        try:
-            if self.retriever is None:
-                print("Model failed to load!")
-                return JSONResponse(content={"error": "Embedding model not initialized"}, status_code = 500)
-            
-            if "text" not in data:
-                return JSONResponse(content={"error": "Text input is required"}, status_code = 400)
-            
-            text = data["text"]
-            embedding = self.retriever.encode([text]).tolist()
-
-            print("Embeddings Generated Successfully!")
-            return JSONResponse(content = embedding, status_code = 200)
-        except Exception as e:
-            raise CustomException(e, sys)
-        
-    def generate_embedding_openai(self, query: str):
-        try:
-            response = self.client.embeddings.create(
-                input = [query],
-                # model = ollama_model
-                model = self.config.transformer
-            )
-            embedding = response.data[0].embedding
-            print(f"Embedding for '{query}': {embedding[:5]}...")
-            print("Embeddings Generated Successfully!")
-            return embedding
-        except Exception as e:
-            raise CustomException(e, sys)
         
     def get_embedding(self, query: str):
         try:
@@ -110,20 +76,6 @@ class EmbeddingModel:
         
         except Exception as e:
             raise CustomException(e, sys)
-
-# async def get_embedding(query: str):
-#     try:
-#         print(f"Generating embedding for query: {query}")
-#         config = ConfigurationManager()
-#         embedding_model_config = config.get_embedding_model_config()
-#         embedding_model = EmbeddingModel(config = embedding_model_config)
-#         loop = asyncio.get_event_loop()
-#         embedding = await loop.run_in_executor(None, embedding_model.generate_embedding_openai, query) # Run in thread executor to avoid blocking
-#         print(f"Embedding generated successfully. Length: {len(embedding)}")
-#         return embedding
-#     except Exception as e:
-#         print(f"Error generating embedding: {e}")
-#         raise CustomException(e, sys)
         
 embedding_model_instance = EmbeddingModel(embedding_model_config)
 
@@ -149,4 +101,9 @@ async def openai_compliant_embedding(request: EmbeddingRequest):
             raise HTTPException(status_code = 500, detail = str(e))
     
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(
+        "__main__:app",
+        host="127.0.0.1",
+        port=8070,
+        log_level="info",
+    )

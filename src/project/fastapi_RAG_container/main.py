@@ -109,7 +109,7 @@ async def root():
 async def list_models():
     try:
         # Path to your config.json file
-        CONFIG_PATH = "fastapi_RAG_container/config.json"
+        CONFIG_PATH = "config.json"
         
         # Load all model configurations
         all_configs = load_all_model_configs(CONFIG_PATH)

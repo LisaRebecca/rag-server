@@ -4,8 +4,8 @@ import json
 import yaml
 import numpy as np
 import faiss
-from fastapi_RAG_container.helpers.exception import CustomException
-from fastapi_RAG_container.helpers.logger import logging
+from helpers.exception import CustomException
+from helpers.logger import logging
 from sentence_transformers import SentenceTransformer
 from nltk.tokenize import word_tokenize
 from fastapi import APIRouter, Depends, HTTPException, status, Header

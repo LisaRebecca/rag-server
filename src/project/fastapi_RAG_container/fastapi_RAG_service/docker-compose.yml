@@ -1,8 +1,8 @@
   services:
   # FastAPI server instances
-    fastapi-server:
-      image: fastapi-image
-      container_name: fastapi-server
+    docker-fastapi:
+      image: docker-fastapi
+      container_name: docker-fastapi
       build:
         dockerfile: Dockerfile
       ports:
@@ -41,7 +41,7 @@
       volumes:
         - ./nginx.conf:/src/project/fastapi_RAG_container/fastapi_RAG_service/nginx.conf  # Map the custom Nginx config file
       depends_on:
-        - fastapi-server
+        - docker-fastapi
 
     # Redis for caching
     redis:
@@ -53,5 +53,5 @@
         - app-network
       
   networks:
-    app-network:
+    my_network:
       driver: bridge
