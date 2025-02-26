@@ -6,7 +6,6 @@ from rag.vanilla_RAG import generation, tokenizer, model
 from rag.rag_retrieval import RAG_Retrieval
 from helpers.utils import load_vector_db, verify_api_key
 from server.university_api import query_university_endpoint
-# from server.embedding_service import embedding_model_instance
 from embedding_service.app.main import embedding_model_instance
 from typing import Optional, List, Dict, Any
 
@@ -145,30 +144,11 @@ async def create_completion(
             logging.info("Response with RAG")
 
             # Step 1: RAG retrieval
-            # async with httpx.AsyncClient() as client:
-            #     response = await client.post("http://localhost:8090/embed", json = {"text": user_prompt})
-            #     response.raise_for_status()
-            #     embedding_data = response.json()
-
-            # # Ensure embedding data is extracted correctly
-            # if isinstance(embedding_data, dict) and "embedding" in embedding_data:
-            #     embedding = embedding_data["embedding"]
-            # elif isinstance(embedding_data, list):
-            #     embedding = embedding_data[0]
-            # else:
-            #     raise ValueError(f"Unexpected embedding response format: {embedding_data}")
-
-            # query_embedding = np.array(embedding, dtype="float32").reshape(1, -1)
-
             print(f"User Prompt: {user_prompt}")
 
             query_embedding = embedding_model_instance.get_embedding(user_prompt)
 
             query_embedding = np.array(query_embedding, dtype="float32").reshape(1, -1)
-
-            print(f"Query Embedding Type: {type(query_embedding)}, Shape: {np.shape(query_embedding)}")
-
-            print(f"Is NumPy array? {isinstance(query_embedding, np.ndarray)}")
 
             retrieved_docs = await RAG_Retrieval.dense_retrieval(query_embedding, index, metadata, top_k=20)
             logging.info(f"Retrieved Documents: {retrieved_docs}")
