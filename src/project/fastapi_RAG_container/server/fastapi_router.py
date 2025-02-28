@@ -150,9 +150,32 @@ async def create_completion(
 
             query_embedding = np.array(query_embedding, dtype="float32").reshape(1, -1)
 
-            retrieved_docs = await RAG_Retrieval.dense_retrieval(query_embedding, index, metadata, top_k=20)
+            #retrieved_docs = await RAG_Retrieval.dense_retrieval(query_embedding, index, metadata, top_k=20)
+            retrieved_docs = RAG_Retrieval.dense_retrieval_reranking(user_prompt, index, metadata, top_k=5)
             logging.info(f"Retrieved Documents: {retrieved_docs}")
 
+            # Extract URLs from the retrieved documents and remove duplicates
+            urls = []            
+            for doc in retrieved_docs:
+                url = doc.get("url")
+                logging.info(f"URL: {url}")
+                if url and url not in urls:                    
+                    if not url.startswith("http"):
+                        url = "https://" + url.replace("\\", "/")
+                    else: url = "https://" + url
+                # Remove trailing "index.html" if present
+                if url.endswith("index.html"):
+                    url = url[:-10]  # Remove the last 10 characters ("index.html")
+                    if not url.endswith("/"):
+                        url += "/"  
+                    urls.append(url)
+
+            if urls:
+                citation_markdown = "\n".join([f"- [{link}]({link})" for link in urls])
+                citation_section = f"\n\n**Sources**\n{citation_markdown}\n"
+            else:
+                citation_section = ""
+                
             # Step 2: RAG generation - Ours
             rag_response = generation(user_prompt, retrieved_docs, tokenizer, model)
             logging.info(f"RAG Response: {rag_response}")
@@ -169,6 +192,10 @@ async def create_completion(
         else:
             logging.info("Response without RAG")
             uni_response = await query_university_endpoint(user_prompt, 'FAU LLM 2.0')
+            
+        # Append the citations to the final response content
+        final_content = f"{uni_response}{citation_section}"
+        
         # Prepare the response in Chat Completion format
         response = ChatCompletionResponse(
             id=str(uuid.uuid4()),
@@ -180,7 +207,7 @@ async def create_completion(
                     index=0,
                     message=ChatMessageResponse(
                         role="assistant",
-                        content=f"{uni_response}\n"
+                        content=final_content
                     ),
                     finish_reason="stop"
                 )
@@ -194,8 +221,8 @@ async def create_completion(
         
         # Optionally cache
         cache.append_to_cache(user_prompt, uni_response)
-        print(f"Query:\n{user_prompt}\n\nUniversity Response:\n{uni_response}\n")
-
+        #print(f"Query:\n{user_prompt}\n\nUniversity Response:\n{uni_response}\n")
+        print(f"Query:\n{user_prompt}\n\nUniversity Response with Citations:\n{final_content}\n")
         return response
 
     except CustomException as ce:
