@@ -19,6 +19,7 @@ import time
 import os
 from dotenv import load_dotenv
 import uuid
+from urllib.parse import urlparse
 
 # Load environment variables from .env file
 load_dotenv()
@@ -150,15 +151,47 @@ async def create_completion(
 
             query_embedding = np.array(query_embedding, dtype="float32").reshape(1, -1)
 
-            retrieved_docs = await RAG_Retrieval.dense_retrieval(query_embedding, index, metadata, top_k=20)
+            #retrieved_docs = await RAG_Retrieval.dense_retrieval(query_embedding, index, metadata, top_k=20)
+            retrieved_docs = RAG_Retrieval.dense_retrieval_reranking(user_prompt, index, metadata, top_k=20)
             logging.info(f"Retrieved Documents: {retrieved_docs}")
 
-            # Step 2: RAG generation - Ours
-            rag_response = generation(user_prompt, retrieved_docs, tokenizer, model)
-            logging.info(f"RAG Response: {rag_response}")
+            urls = []            
+            for doc in retrieved_docs:
+                url = doc.get("url")
+                logging.info(f"URL: {url}")
+                if url:                  
+                    if not url.startswith("http"):
+                        url = "https://" + url.replace("\\", "/")
+                    else: url = "https://" + url
+                    # Remove trailing "index.html" if present
+                    if url.endswith("index.html"):
+                        url = url[:-10]  # Remove the last 10 characters ("index.html")
+                        if not url.endswith("/"):
+                            url += "/"  
+                    parsed = urlparse(url)
+                    if "fau.de" not in parsed.netloc:
+                        logging.info(f"Ignoring URL (not from fau.de): {url}")
+                        continue 
+                    if url not in urls:  
+                        urls.append(url)
 
+            if urls:
+                citation_markdown = "\n".join([f"- [{link}]({link})" for link in urls])
+                citation_section = f"\n\n**Sources**\n{citation_markdown}\n"
+            else:
+                citation_section = ""
+                
+            info = []            
+            for doc in retrieved_docs:
+                text = doc.get("text")
+                info.append(text)
+                
+            # Step 2: RAG generation - Ours
+            rag_response = generation(user_prompt, info, tokenizer, model)
+            logging.info(f"RAG Response: {rag_response}")
+            
             # Step 3: Call University API (or skip if you want)
-            rag_query = f"Based on the following documents {retrieved_docs}, please answer this question: {user_prompt}."
+            rag_query = f"Based on the following documents {info}, please answer this question: {user_prompt}."
             uni_response = await query_university_endpoint(rag_query, 'FAU LLM 2.0')
             logging.info(f"{uni_response}")
 
