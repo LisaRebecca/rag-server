@@ -202,6 +202,10 @@ async def create_completion(
         else:
             logging.info("Response without RAG")
             uni_response = await query_university_endpoint(user_prompt, 'FAU LLM 2.0')
+
+        # Append the citations to the final response content
+        final_content = f"{uni_response}{citation_section}"
+        
         # Prepare the response in Chat Completion format
         response = ChatCompletionResponse(
             id=str(uuid.uuid4()),
@@ -213,7 +217,7 @@ async def create_completion(
                     index=0,
                     message=ChatMessageResponse(
                         role="assistant",
-                        content=f"{uni_response}\n"
+                        content=f"{uni_response}{citation_section}"
                     ),
                     finish_reason="stop"
                 )
@@ -227,8 +231,8 @@ async def create_completion(
         
         # Optionally cache
         cache.append_to_cache(user_prompt, uni_response)
-        print(f"Query:\n{user_prompt}\n\nUniversity Response:\n{uni_response}\n")
-
+        #print(f"Query:\n{user_prompt}\n\nUniversity Response:\n{uni_response}\n")
+        print(f"Query:\n{user_prompt}\n\nUniversity Response with Citations:\n{final_content}\n")
         return response
 
     except CustomException as ce:
