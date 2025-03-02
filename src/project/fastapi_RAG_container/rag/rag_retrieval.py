@@ -49,6 +49,53 @@ class RAG_Retrieval:
             print(f"Error generating embedding: {e}")
             raise CustomException(e, sys)
         
+    def dense_retrieval_reranking(query_embedding, index, metadata, top_k):
+        try:
+            start_time = time.time()  # Start timing
+            # Step 1: Encode the query and normalize it
+            query_embed = query_embedding / np.linalg.norm(query_embedding, axis=1, keepdims=True)
+
+            # Step 2: Retrieve the top_k nearest neighbors from the index
+            # _, indices = index.search(np.array(query_embedding, dtype="float32"), top_k)
+            _, indices = index.search(query_embed, top_k)
+            
+            # Step 3: Get candidate documents using the indices
+            retrieved_docs = [{"text": metadata[i]["text"], "url": metadata[i]["url"]}
+                            for i in indices[0]]
+                        
+            # Step 4: Extract candidate texts and compute their embeddings
+            candidate_texts = [doc["text"] for doc in retrieved_docs]
+            candidate_embeddings = retriever.encode(candidate_texts)
+            candidate_embeddings = candidate_embeddings / np.linalg.norm(candidate_embeddings, axis=1, keepdims=True)
+            
+            # Step 5: Re-rank the candidates using fast_rerank
+            reranked_texts = RAG_Retrieval.fast_rerank(query_embed, candidate_embeddings, candidate_texts, final_top_k=top_k)
+            
+            # Step 6: Map the re-ranked texts back to full document metadata
+            text_to_doc = {doc["text"]: doc for doc in retrieved_docs}
+            reranked_docs = [text_to_doc[text] for text in reranked_texts]
+
+            end_time = time.time()  # End timing
+            elapsed_time = end_time - start_time
+            print(f"Dense retrieved and re-ranked successfully in {elapsed_time:.4f} seconds")
+            logging.info("Documents retrieved and re-ranked successfully!")
+            return reranked_docs
+
+        except Exception as e:
+            logging.error(f"Error during dense retrieval: {e}")
+            return []
+        
+    def fast_rerank(query_embedding, candidate_embeddings, candidate_texts, final_top_k):
+        """
+        Re-rank candidate texts by computing cosine similarity between the query and candidate embeddings.
+        Assumes that both the query_embedding and candidate_embeddings are L2-normalized.
+        """
+        # Compute cosine similarities (dot product for normalized vectors)
+        sims = np.dot(candidate_embeddings, query_embedding.T).squeeze()  # shape (n,)
+        # Sort candidate texts by similarity score (highest first)
+        ranked = sorted(zip(candidate_texts, sims.tolist()), key=lambda x: x[1], reverse=True)
+        return [text for text, score in ranked[:final_top_k]]
+        
     def sparse_retrieval(query, metadata, top_k):
         try:
             # import nltk
@@ -163,47 +210,3 @@ class RAG_Retrieval:
             
         except Exception as e:
             raise CustomException(e, sys)
-
-    def dense_retrieval_reranking(query, index, metadata, top_k):
-        logging.info(f"Query received: {query} with index: {index}")
-        try:
-            # Step 1: Encode the query and normalize it
-            query_embedding = retriever.encode([query])
-            query_embedding = query_embedding / np.linalg.norm(query_embedding, axis=1, keepdims=True)
-
-            # Step 2: Retrieve the top_k nearest neighbors from the index
-            _, indices = index.search(np.array(query_embedding, dtype="float32"), top_k)
-            
-            # Step 3: Get candidate documents using the indices
-            retrieved_docs = [{"text": metadata[i]["text"], "url": metadata[i]["url"]}
-                            for i in indices[0]]
-            
-            # Step 4: Extract candidate texts and compute their embeddings
-            candidate_texts = [doc["text"] for doc in retrieved_docs]
-            candidate_embeddings = retriever.encode(candidate_texts)
-            candidate_embeddings = candidate_embeddings / np.linalg.norm(candidate_embeddings, axis=1, keepdims=True)
-            
-            # Step 5: Re-rank the candidates using fast_rerank
-            reranked_texts = RAG_Retrieval.fast_rerank(query_embedding, candidate_embeddings, candidate_texts, final_top_k=top_k)
-            
-            # Step 6: Map the re-ranked texts back to full document metadata
-            text_to_doc = {doc["text"]: doc for doc in retrieved_docs}
-            reranked_docs = [text_to_doc[text] for text in reranked_texts]
-            
-            logging.info("Documents retrieved and re-ranked successfully!")
-            return reranked_docs
-
-        except Exception as e:
-            logging.error(f"Error during dense retrieval: {e}")
-            return []
-
-    def fast_rerank(query_embedding, candidate_embeddings, candidate_texts, final_top_k):
-        """
-        Re-rank candidate texts by computing cosine similarity between the query and candidate embeddings.
-        Assumes that both the query_embedding and candidate_embeddings are L2-normalized.
-        """
-        # Compute cosine similarities (dot product for normalized vectors)
-        sims = np.dot(candidate_embeddings, query_embedding.T).squeeze()  # shape (n,)
-        # Sort candidate texts by similarity score (highest first)
-        ranked = sorted(zip(candidate_texts, sims.tolist()), key=lambda x: x[1], reverse=True)
-        return [text for text, score in ranked[:final_top_k]]
