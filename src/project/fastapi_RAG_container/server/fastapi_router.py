@@ -12,6 +12,7 @@ from typing import Optional, List, Dict, Any
 from helpers.exception import CustomException
 from helpers.logger import logging
 from helpers.smart_cache import SmartCache
+from urllib.parse import urlparse
 
 import numpy as np
 import faiss
@@ -19,7 +20,6 @@ import time
 import os
 from dotenv import load_dotenv
 import uuid
-from urllib.parse import urlparse
 
 # Load environment variables from .env file
 load_dotenv()
@@ -151,8 +151,8 @@ async def create_completion(
 
             query_embedding = np.array(query_embedding, dtype="float32").reshape(1, -1)
 
-            #retrieved_docs = await RAG_Retrieval.dense_retrieval(query_embedding, index, metadata, top_k=20)
-            retrieved_docs = RAG_Retrieval.dense_retrieval_reranking(user_prompt, index, metadata, top_k=20)
+            # retrieved_docs = await RAG_Retrieval.dense_retrieval(query_embedding, index, metadata, top_k=20)
+            retrieved_docs = RAG_Retrieval.dense_retrieval_reranking(query_embedding, index, metadata, top_k=20)
             logging.info(f"Retrieved Documents: {retrieved_docs}")
 
             urls = []            
@@ -185,12 +185,14 @@ async def create_completion(
             for doc in retrieved_docs:
                 text = doc.get("text")
                 info.append(text)
-                
+
             # Step 2: RAG generation - Ours
+            # rag_response = generation(user_prompt, retrieved_docs, tokenizer, model)
             rag_response = generation(user_prompt, info, tokenizer, model)
             logging.info(f"RAG Response: {rag_response}")
-            
+
             # Step 3: Call University API (or skip if you want)
+            # rag_query = f"Based on the following documents {retrieved_docs}, please answer this question: {user_prompt}."
             rag_query = f"Based on the following documents {info}, please answer this question: {user_prompt}."
             uni_response = await query_university_endpoint(rag_query, 'FAU LLM 2.0')
             logging.info(f"{uni_response}")
@@ -198,6 +200,7 @@ async def create_completion(
             end_time = time.time()
             elapsed_time = end_time - start_time
             print(f"Response took {elapsed_time:.4f} seconds")
+            print(f"Citations: {citation_section}")
             logging.info(f"Finished query in: {end_time - start_time} seconds")
         else:
             logging.info("Response without RAG")
@@ -205,7 +208,7 @@ async def create_completion(
 
         # Append the citations to the final response content
         final_content = f"{uni_response}{citation_section}"
-        
+
         # Prepare the response in Chat Completion format
         response = ChatCompletionResponse(
             id=str(uuid.uuid4()),
@@ -231,7 +234,6 @@ async def create_completion(
         
         # Optionally cache
         cache.append_to_cache(user_prompt, uni_response)
-        #print(f"Query:\n{user_prompt}\n\nUniversity Response:\n{uni_response}\n")
         print(f"Query:\n{user_prompt}\n\nUniversity Response with Citations:\n{final_content}\n")
         return response
 
