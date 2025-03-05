@@ -193,7 +193,14 @@ async def create_completion(
 
             # Step 3: Call University API (or skip if you want)
             # rag_query = f"Based on the following documents {retrieved_docs}, please answer this question: {user_prompt}."
-            rag_query = f"Based on the following documents {info}, please answer this question: {user_prompt}."
+            rag_query = (
+                f"Based on the following documents {info}, please answer the question: {user_prompt}. "
+                f"The answer should be written fully in English, regardless of the languages used in the documents. "
+                f"Only use foreign words when necessary, such as names or official titles, but keep the overall narrative in English. "
+                f"If the question is asked in another language, reply in that language instead."
+)
+
+
             uni_response = await query_university_endpoint(rag_query, 'FAU LLM 2.0')
             logging.info(f"{uni_response}")
 
