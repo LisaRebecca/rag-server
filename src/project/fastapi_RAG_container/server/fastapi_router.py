@@ -198,7 +198,7 @@ async def create_completion(
                 f"The answer should be written fully in English, regardless of the languages used in the documents. "
                 f"Only use foreign words when necessary, such as names or official titles, but keep the overall narrative in English. "
                 f"If the question is asked in another language, reply in that language instead."
-)
+                )
 
 
             uni_response = await query_university_endpoint(rag_query, 'FAU LLM 2.0')
