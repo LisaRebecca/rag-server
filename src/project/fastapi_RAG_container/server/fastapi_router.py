@@ -209,6 +209,7 @@ async def create_completion(
         else:
             logging.info("Response without RAG")
             uni_response = await query_university_endpoint(user_prompt, 'FAU LLM 2.0')
+            citation_section = ""
 
         # Append the citations to the final response content
         final_content = f"{uni_response}{citation_section}"
