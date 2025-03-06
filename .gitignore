@@ -180,3 +180,4 @@ cython_debug/
 
 *.crt
 *.key
+.DS_Store
