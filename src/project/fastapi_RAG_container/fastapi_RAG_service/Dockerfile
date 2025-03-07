@@ -6,6 +6,7 @@ WORKDIR /fastapi_RAG_container
 
 # Copy the project structure into the container
 COPY . /fastapi_RAG_container
+COPY ./fastapi_RAG_service/entrypoint.sh /entrypoint.sh
 
 # Install dependencies
 RUN pip install -r fastapi_RAG_service/requirements.txt
@@ -16,4 +17,4 @@ RUN apt update && apt install -y curl
 EXPOSE 8090
 
 # Command to run the application
-CMD ["python", "-m", "uvicorn", "fastapi_RAG_service.app.main:app", "--host", "0.0.0.0", "--port", "8090", "--workers", "1"]
+CMD ["/entrypoint.sh"]
