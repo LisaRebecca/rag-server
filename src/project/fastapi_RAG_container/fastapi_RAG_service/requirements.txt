@@ -4,6 +4,7 @@ redis
 uvicorn
 numpy
 aioredis
+aiohttp
 openai
 pydantic
 beautifulsoup4

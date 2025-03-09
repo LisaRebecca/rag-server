@@ -11,7 +11,6 @@ from fastapi_RAG_container.helpers.exception import CustomException
 from fastapi_RAG_container.helpers.utils import load_all_model_configs
 from pydantic import BaseModel
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
-import openai
 import logging
 import uvicorn
 import os
@@ -82,9 +81,6 @@ cache = SmartCache(index = cache_index)
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Configure OpenAI API
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # Define a request model for the input data
 class PromptRequest(BaseModel):

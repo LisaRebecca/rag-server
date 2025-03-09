@@ -6,6 +6,7 @@ WORKDIR /fastapi_RAG_container
 
 # Copy the project structure into the container
 COPY . /fastapi_RAG_container
+COPY ./embedding_service/entrypoint.sh /entrypoint.sh
 
 # Install dependencies
 RUN pip install -r embedding_service/requirements.txt
@@ -16,4 +17,4 @@ RUN apt update && apt install -y curl
 EXPOSE 8070
 
 # Command to run the application
-CMD ["python", "-m", "uvicorn", "embedding_service.app.main:app", "--host", "0.0.0.0", "--port", "8070", "--workers", "1"]
+CMD ["/entrypoint.sh"]
