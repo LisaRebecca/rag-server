@@ -6,10 +6,20 @@ services:
   fastapi-rag-app: # Service A - FastAPI + RAG
     image: fastapi-rag-app # Replace with your actual FastAPI image name
     container_name: fastapi-rag-app # Optional, but helpful for clarity
+    build:
+      context: .
+      dockerfile: fastapi_RAG_service/Dockerfile
     ports:
       - "8090:8090"
     networks:
       - my-rag-network # Attach to the network
+    environment:
+      - RAG_MODELNAME=FAU LLM DC 2.0
+      - PLAIN_MODELNAME=FAU LLM DC
+      - OPENAI_API_URL=http://api.openai.com/v1/chat/completions
+      - OPENAI_API_KEY=sk-random-key-from
+      - OPENAI_LLM_MODEL=gpt-4o-mini
+      - DEBUG=true
 
   open-webui: # Service B - Open WebUI
     image: ghcr.io/open-webui/open-webui # Replace with your actual Open WebUI image name
@@ -22,7 +32,15 @@ services:
   embedding-service: # Service C - Embedding Service
     image: embedding-service # Replace with your actual Embedding Service image name
     container_name: embedding-service # Optional
+    build:
+      context: .
+      dockerfile: embedding_service/Dockerfile
     ports:
       - "8070:8070"
     networks:
       - my-rag-network # Attach to the network
+    environment:
+      - EMBEDDING_MODEL=sentence-transformers/all-mpnet-base-v2
+      - EMBEDDING_API_KEY=FIXME - no API key specified
+      - EMBEDDING_API_URL=http://embedding-service:8070/v1/embeddings
+      - DEBUG=true
