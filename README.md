@@ -27,6 +27,22 @@ Tier0 is a **modular Retrieval-Augmented Generation (RAG) system** crafted to op
 
 ---
 
+## 💡 Hardware Requirements
+
+Depending on which part of the RAG server you're running, the hardware demands vary. Here’s a breakdown of what benefits from GPU acceleration and what runs fine on CPU:
+
+| Component                          | Requires GPU? | Notes                                                                 |
+|------------------------------------|---------------|-----------------------------------------------------------------------|
+| 🔍 **Embedding Model Inference** (`sentence-transformers/all-mpnet-base-v2`) | Recommended   | Runs on CPU, but GPU is strongly recommended for faster document embedding, especially for large datasets. |
+| 📚 **Vector Search (FAISS)**        | No            | FAISS typically runs on CPU; GPU FAISS is optional for large-scale production systems. |
+| 🧠 **LLM Response Generation** (`TechxGenus_Mistral-Large-Instruct-2407-AWQ`) | Recommended   | Model inference is significantly faster on GPU. Small setups may run on CPU but expect higher latency. |
+| 🔧 **API Server (FastAPI)**         | No            | The server logic is CPU-based and doesn’t require GPU. |
+| 🗃️ **Cache Layer (Redis or Similar)** | No            | Runs entirely on CPU, designed for low latency key-value storage. |
+
+⚠️ **Note:** While the RAG server can run entirely on CPU, for production or large document sets, a GPU is highly recommended to reduce inference and retrieval latency.
+
+---
+
 ## 🧑‍💻 Installation Guide
 
 1️⃣ Clone the repository:
