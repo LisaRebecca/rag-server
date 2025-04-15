@@ -122,19 +122,14 @@ celerybeat.pid
 *.sage.py
 
 # JSON
-/src/project/fastapi_RAG_container/knowledgebase/*
-# /src/project/fastapi_RAG_container/knowledgebase/quality_html-pdf.jsonl
-# /src/project/fastapi_RAG_container/knowledgebase/metadata.json
-
-# FAISS
-src/project/fastapi_RAG_container/vector_index_fau.faiss
-src/project/fastapi_RAG_container/vector_index.faiss
+src/fau_rag/knowledgebase/*
 
 # Prometheus
 /prometheus
+monitoring/*
 
-# Logs
-src/project/fastapi_RAG_container/logs
+# Main
+# src/fau_rag/main.py
 
 # Environments
 .env
