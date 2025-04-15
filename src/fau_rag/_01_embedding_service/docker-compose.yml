@@ -1,0 +1,19 @@
+  services:
+    embedding_service:
+      image: embedding_service
+      container_name: embedding_service
+      build:
+        dockerfile: Dockerfile
+      ports:
+        - "8070"
+      environment:
+        - HOST=0.0.0.0
+        - PORT=8070
+      volumes:
+        - ../src:/app
+      networks:
+        - my_network
+        
+  networks:
+    my_network:
+      driver: bridge

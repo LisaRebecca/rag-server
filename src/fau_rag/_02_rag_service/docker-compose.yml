@@ -1,0 +1,55 @@
+  services:
+    docker-fastapi:
+      image: docker-fastapi
+      container_name: docker-fastapi
+      build:
+        dockerfile: Dockerfile
+      ports:
+        - "8090"
+      environment:
+        - HOST=0.0.0.0
+        - PORT=8090
+        - REDIS_HOST=redis
+      deploy:
+        replicas: 3
+        resources:
+          limits:
+            cpus: '0.50'
+            memory: 256M
+      volumes:
+        - ../src:/app
+      depends_on:
+        - redis
+      networks:
+        - my_network
+
+    openwebui:
+      image: openwebui-image
+      container_name: openwebui
+      ports:
+        - "3000:3000"
+      networks:
+        - my_network
+
+    # Nginx load balancer
+    nginx:
+      image: nginx:latest
+      ports:
+        - "80:80"  # Expose Nginx on port 80
+      volumes:
+        - ./nginx.conf:/src/project/fastapi_RAG_container/fastapi_RAG_service/nginx.conf
+      depends_on:
+        - docker-fastapi
+
+    # Redis for caching
+    redis:
+      image: redis:latest
+      container_name: redis
+      ports:
+        - "6379:6379"
+      networks:
+        - app-network
+      
+  networks:
+    my_network:
+      driver: bridge
