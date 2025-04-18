@@ -1,99 +1,46 @@
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel, Field, Extra
-
-from retrievers.dense_retrieval import dense_retrieval_instance
-from embedding_service.app.main import embedding_model_instance
-from helpers.utils import load_vector_db
-from rag_service.university_api import query_university_endpoint
-from typing import Optional, List, Dict, Any
+from fastapi import (APIRouter,
+                     HTTPException,
+                     status)
 
 from helpers.exception import CustomException
 from helpers.logger import logging
 from helpers.smart_cache import SmartCache
-from urllib.parse import urlparse
+from helpers.utils import load_vector_db
+from helpers.schemas import(CompletionRequest,
+                            ChatCompletionResponse,
+                            ChatChoiceResponse,
+                            ChatMessageResponse)
+
+from retrievers.dense_retrieval import dense_retrieval_instance
+from embedding_service.app.main import embedding_model_instance
+from rag_service.university_api import query_university_endpoint
+from constants import (VECTORSTORE_PATH,
+                       METADATA_PATH_FAU,
+                       API_KEYS)
 
 import numpy as np
 import faiss
 import time
-import os
-from dotenv import load_dotenv
 import uuid
-
-# Load environment variables from .env file
-load_dotenv()
+from urllib.parse import urlparse
 
 # Authentication
-API_KEYS = os.getenv('OPENAI_API_KEY')
-print(f"Loaded API Key: {API_KEYS}")
-
 if not API_KEYS:
     raise ValueError("API key is not set. Check the OPENAI_API_KEY environment variable.")
-    
-VECTORSTORE_PATH = "knowledgebase/vector_index_fau.faiss"
-METADATA_PATH_FAU = "knowledgebase/quality_html-pdf.jsonl" # FAU chunked data [text, url, file_path, chunk_no, dl_date, chunk_date, quality_score]
 
+# FastAPI Router
 router = APIRouter()
 
+# Loading Knowledgebase
 index, metadata = load_vector_db(index_file = VECTORSTORE_PATH, metadata_file = METADATA_PATH_FAU)
+
+# Cache Setup
 cache_index = faiss.IndexFlatL2(128)
 cache = SmartCache(index = cache_index)
                   
-# --------------------------------------------------------------
-# 1) Define new models to match your incoming payload
-# --------------------------------------------------------------
-class Message(BaseModel):
-    id: Optional[str] = None
-    parentId: Optional[str] = None
-    childrenIds: Optional[List[str]] = None
-    role: Optional[str] = None
-    content: Optional[str] = None
-    model: Optional[str] = None
-    modelName: Optional[str] = None
-    modelIdx: Optional[int] = None
-    userContext: Optional[Any] = None
-    timestamp: Optional[int] = None
-    done: Optional[bool] = None
-    
-    class Config:
-        extra = Extra.allow  # ignore any extra fields in messages
-
-class CompletionRequest(BaseModel):
-    model: Optional[str] = Field(default="default-model")
-    prompt: Optional[str] = None
-    messages: Optional[List[Message]] = None
-    type: Optional[str] = None
-    stream: Optional[bool] = None
-
-    # If you still want max_tokens, temperature, etc., keep them:
-    max_tokens: Optional[int] = 100
-    temperature: Optional[float] = 0.7
-    top_p: Optional[float] = 1.0
-
-    class Config:
-        extra = Extra.allow  # allow any additional fields (params, background_tasks, etc.)
 
 # --------------------------------------------------------------
-# 2) Define your Chat Completion Response models
-# --------------------------------------------------------------
-class ChatMessageResponse(BaseModel):
-    role: str
-    content: str
-
-class ChatChoiceResponse(BaseModel):
-    index: int
-    message: ChatMessageResponse
-    finish_reason: Optional[str] = None
-
-class ChatCompletionResponse(BaseModel):
-    id: str
-    object: str
-    created: int
-    model: str
-    choices: List[ChatChoiceResponse]
-    usage: Optional[Dict[str, int]] = None
-
-# --------------------------------------------------------------
-# 3) Main endpoint: parse either request.prompt or from messages
+# RAG Pipeline
 # --------------------------------------------------------------
 @router.post("/v1/chat/completions", response_model=ChatCompletionResponse)
 async def create_completion(
