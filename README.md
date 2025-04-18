@@ -53,41 +53,39 @@ cd rag-server
 ```
 
 
-2️⃣ For local setup please follow the following steps:
+2️⃣ For **local** setup please follow the following steps:
 
-Make sure you have Python installed (recommendation: Python 3.9+).
+⚠️ **Note:** Make sure you have Python installed (recommendation: Python 3.9+)
 
-1. Inside your project's **root** directory create a **Virtual Environment** using:
+A. Inside your project's **root** directory create a **Virtual Environment**:
 
 ```bash
 python3 -m venv myvenv
 ```
 
-2. Activate the Virtual Environment:
-    a. On Linux/**macOS**:
+B. Activate the Virtual Environment:
+
+    i. On Linux/**macOS**:
     
-        ```bash
-        source myvenv/bin/activate
-        ```
-    b. On **Windows**:
+        ```source myvenv/bin/activate```
 
-        ```bash
-        myvenv\Scripts\activate
-        ```
+    ii. On **Windows**:
 
-3. From your project's **root** directory install all required packages using:
+        ```myvenv\Scripts\activate```
+
+C. From your project's **root** directory install all required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Install Open WebUI:
+D. Install Open WebUI:
 
 ```bash
 pip install open-webui
 ```
 
-5. Start the Open WebUI server:
+E. Start the Open WebUI server:
 
 ```bash
 open-webui serve
@@ -95,6 +93,7 @@ open-webui serve
 
 
 3️⃣ Run the application locally:
+
 Once the dependencies are installed, start the server using:
 
 ```bash
@@ -102,10 +101,10 @@ uvicorn main:app --reload
 ```
 
 
-4️⃣ Finally, open your browser and navigate to:
+4️⃣ Finally, open your browser and navigate to: 
 ```http://localhost:8090```
 
-The API documentation and endpoints will be available at:
+The API documentation and endpoints will be available at: 
 ```http://localhost:8090/docs```
 
 ---
@@ -140,7 +139,8 @@ Located in `fau_rag/rag_service/rag_pipeline.py`.
 
 ## 🌐 Connecting to FAU Endpoints (via Cisco VPN)
 
-1️⃣ **Install Cisco AnyConnect Client**  
+1️⃣ **Install Cisco AnyConnect Client**
+
 Connect to:
 
 ```bash
@@ -148,7 +148,8 @@ vpn.fau.de
 ```
 
 
-2️⃣ **Login with FAU Credentials**  
+2️⃣ **Login with FAU Credentials**
+
 Use your FAU `IdM` username and password.
 
 ---
@@ -157,13 +158,13 @@ Use your FAU `IdM` username and password.
 
 ### 🔨 Build Docker Images (First Time Only)
 
-From your project directory: `cd src/fau_rag`.
+From your project directory: `cd src/fau_rag`
 
 1. **Embedding Service:**
 ```bash
 docker build -f embedding_service/Dockerfile -t embedding-service .
 ```
-To run/test the individual service, from `src/fau_rag/embedding_service`
+To run/test the individual service, from `src/fau_rag/embedding_service` run:
 ```bash
 docker-compose up -d
 ```
@@ -173,7 +174,7 @@ docker-compose up -d
 docker build -f rag_service/Dockerfile -t rag-service .
 ```
 
-To run/test the individual service, from `src/fau_rag/rag_service`
+To run/test the individual service, from `src/fau_rag/rag_service` run:
 ```bash
 docker-compose up -d
 ```
@@ -207,9 +208,13 @@ docker run -d -p 3000:8080 -e OPENAI_API_KEY=your_secret_key \
 
 
 4. To connect the services together, on the bottom left corner of the Open WebUI frontend:
-a. goto: Admin Panel -> Settings -> Connections -> Manage OpenAI API Connections
-b. Add new connection:
+
+A. goto: Admin Panel -> Settings -> Connections -> Manage OpenAI API Connections
+
+B. Add new connection:
+
     URL: http://rag-service:8090/v1
+
     KEY: "YOUR API KEY HERE" must match the **OPENAI_API_KEY** you're using inside your **.env** file.
 
 After verifying the connection you should be able to find "**FAU LLM 2.0**" in the dropdown list of models.

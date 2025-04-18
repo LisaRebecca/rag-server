@@ -5,7 +5,7 @@ Each service is responsible for a specific task, making the system easy to scale
 
 ---
 
-## 💻 1️⃣ Open WebUI — *User Interaction Layer - Frontend*
+## 1️⃣ - 💻 Open WebUI — *User Interaction Layer (Frontend)*
 
 **Purpose:**  
 Acts as the entry point for users to interact with the FAU LLM RAG system.
@@ -22,7 +22,7 @@ Acts as the entry point for users to interact with the FAU LLM RAG system.
 
 ---
 
-## 📐 2️⃣ Embedding Service — *Vector Conversion*
+## 2️⃣ - 📐 Embedding Service — *Vector Conversion*
 
 **Purpose:**  
 Transforms raw text queries into high-dimensional embedding vectors suitable for semantic search.
@@ -53,7 +53,7 @@ POST /embed
 
 ---
 
-## 🔎 3️⃣ Retrieval Service — *Similarity Search Engine*
+## 3️⃣ - 🔎 Retrieval Service — *Similarity Search Engine*
 
 **Purpose:**  
 Performs fast and accurate document retrieval based on embedding similarity.
@@ -86,7 +86,7 @@ POST /retrieve
 
 ---
 
-## 🧠 4️⃣ RAG Service — *Response Generation Engine*
+## 4️⃣ - 🧠 RAG Service — *Response Generation Engine*
 
 **Purpose:**  
 Generates responses based on retrieved documents and the original query.
@@ -122,13 +122,21 @@ POST /generate
 ## 🕸️ System Flow Overview
 
 User Input (Open WebUI)
+
           ⬇️
+
 Embedding Vector (Embedding Service)
+
           ⬇️
+
 Relevant Documents (Retrieval Service)
+
           ⬇️
+
 Final Answer (RAG Service)
+
           ⬇️
+
 Displayed to User (Open WebUI)
 
 
@@ -143,7 +151,7 @@ Displayed to User (Open WebUI)
 
 ---
 
-✅ **Tip:**  
+✅ **Final Tip:**
 For optimal performance in production, ensure GPU resources are allocated to the **Embedding Service** and **RAG Service**.
 
 ---
