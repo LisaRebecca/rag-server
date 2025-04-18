@@ -6,10 +6,10 @@ Tier0 is a **modular Retrieval-Augmented Generation (RAG) system** crafted to op
 
 ## 🧠 Key Features
 
-- ⚡ **Fast & Accurate** — balances retrieval speed and relevance for optimal AI responses.
-- 🧩 **Modular Architecture** — easy to extend, swap, and maintain components.
-- 🔐 **Enterprise-Ready** — integrates smoothly into secure networks like FAU's infrastructure.
-- 🌍 **Flexible Frontend** — Open WebUI compatibility for user-friendly interaction.
+- **Fast & Accurate** — balances retrieval speed and relevance for optimal AI responses.
+- **Modular Architecture** — easy to extend, swap, and maintain components.
+- **Enterprise-Ready** — integrates smoothly into secure networks like FAU's infrastructure.
+- **Flexible Frontend** — Open WebUI compatibility for user-friendly interaction.
 
 ---
 
@@ -33,11 +33,11 @@ Depending on which part of the RAG server you're running, the hardware demands v
 
 | Component                          | Requires GPU? | Notes                                                                 |
 |------------------------------------|---------------|-----------------------------------------------------------------------|
-| 🔍 **Embedding Model Inference** (`sentence-transformers/all-mpnet-base-v2`) | Recommended   | Runs on CPU, but GPU is strongly recommended for faster document embedding, especially for large datasets. |
-| 📚 **Vector Search (FAISS)**        | No            | FAISS typically runs on CPU; GPU FAISS is optional for large-scale production systems. |
-| 🧠 **LLM Response Generation** (`TechxGenus_Mistral-Large-Instruct-2407-AWQ`) | Recommended   | Model inference is significantly faster on GPU. Small setups may run on CPU but expect higher latency. |
-| 🔧 **API Server (FastAPI)**         | No            | The server logic is CPU-based and doesn’t require GPU. |
-| 🗃️ **Cache Layer (Redis or Similar)** | No            | Runs entirely on CPU, designed for low latency key-value storage. |
+| **Embedding Model Inference** (`sentence-transformers/all-mpnet-base-v2`) | Recommended   | Runs on CPU, but GPU is strongly recommended for faster document embedding, especially for large datasets. |
+| **Vector Search (FAISS)**        | No            | FAISS typically runs on CPU; GPU FAISS is optional for large-scale production systems. |
+| **LLM Response Generation** (`TechxGenus_Mistral-Large-Instruct-2407-AWQ`) | Recommended   | Model inference is significantly faster on GPU. Small setups may run on CPU but expect higher latency. |
+| **API Server (FastAPI)**         | No            | The server logic is CPU-based and doesn’t require GPU. |
+| **Cache Layer (Redis or Similar)** | No            | Runs entirely on CPU, designed for low latency key-value storage. |
 
 ⚠️ **Note:** While the RAG server can run entirely on CPU, for production or large document sets, a GPU is highly recommended to reduce inference and retrieval latency.
 
@@ -52,6 +52,62 @@ git clone https://github.com/LisaRebecca/rag-server.git
 cd rag-server
 ```
 
+
+2️⃣ For local setup please follow the following steps:
+
+Make sure you have Python installed (recommendation: Python 3.9+).
+
+1. Inside your project's **root** directory create a **Virtual Environment** using:
+
+```bash
+python3 -m venv myvenv
+```
+
+2. Activate the Virtual Environment:
+    a. On Linux/**macOS**:
+    
+        ```bash
+        source myvenv/bin/activate
+        ```
+    b. On **Windows**:
+
+        ```bash
+        myvenv\Scripts\activate
+        ```
+
+3. From your project's **root** directory install all required packages using:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Install Open WebUI:
+
+```bash
+pip install open-webui
+```
+
+5. Start the Open WebUI server:
+
+```bash
+open-webui serve
+```
+
+
+3️⃣ Run the application locally:
+Once the dependencies are installed, start the server using:
+
+```bash
+uvicorn main:app --reload
+```
+
+
+4️⃣ Finally, open your browser and navigate to:
+```http://localhost:8090```
+
+The API documentation and endpoints will be available at:
+```http://localhost:8090/docs```
+
 ---
 
 ## 📚 Knowledge Base Setup
@@ -59,6 +115,8 @@ cd rag-server
 Download the **chunked JSONL knowledge base** here:
 
 👉 [Download Knowledge Base](https://drive.google.com/file/d/1_4BNVhkEaAOngTAsgLgh38kWe0aQdrqW/view?usp=drive_link)
+
+Create a new folder labeled ```knowledgebase``` inside `src/fau_rag` and drop the newly downloaded knowledge base inside of it.
 
 ---
 
@@ -68,15 +126,15 @@ Select your preferred index depending on speed vs. embedding quality:
 
 | Index Type         | Dimensions | Model                     | Download Link                                               |
 |---------------------|------------|----------------------------|-------------------------------------------------------------|
-| 🌱 **Light Index**   | 384        | `all-MiniLM-L6-v2`         | [Download](https://drive.google.com/file/d/1qOECFQ_Df_sBCextiqRbPjeKHTFXpbdW/view?usp=sharing) |
-| 🌳 **Normal Index**  | 768        | `all-mpnet-base-v2`        | [Download](https://drive.google.com/file/d/1-0ncb5rZ-9SSosAocHnuR6iYIfLLdtNE/view?usp=sharing) |
+| **Light Index**   | 384        | `all-MiniLM-L6-v2`         | [Download](https://drive.google.com/file/d/1qOECFQ_Df_sBCextiqRbPjeKHTFXpbdW/view?usp=sharing) |
+| **Normal Index**  | 768        | `all-mpnet-base-v2`        | [Download](https://drive.google.com/file/d/1-0ncb5rZ-9SSosAocHnuR6iYIfLLdtNE/view?usp=sharing) |
 
 ➡️ After downloading, update your path in:
 
 ```python
 VECTORSTORE_PATH
 ```
-Located in `server/fastapi_router.py`.
+Located in `fau_rag/rag_service/rag_pipeline.py`.
 
 ---
 
@@ -89,6 +147,7 @@ Connect to:
 vpn.fau.de
 ```
 
+
 2️⃣ **Login with FAU Credentials**  
 Use your FAU `IdM` username and password.
 
@@ -98,19 +157,30 @@ Use your FAU `IdM` username and password.
 
 ### 🔨 Build Docker Images (First Time Only)
 
-From your project directory:
+From your project directory: `cd src/fau_rag`.
 
 1. **Embedding Service:**
 ```bash
 docker build -f embedding_service/Dockerfile -t embedding-service .
 ```
-
-2. **FastAPI RAG App:**
+To run/test the individual service, from `src/fau_rag/embedding_service`
 ```bash
-docker build -f fastapi_RAG_service/Dockerfile -t fastapi-rag-app .
+docker-compose up -d
 ```
 
-### 🚀 Run with Docker Compose (For Existing Builds)
+2. **RAG Service:**
+```bash
+docker build -f rag_service/Dockerfile -t rag-service .
+```
+
+To run/test the individual service, from `src/fau_rag/rag_service`
+```bash
+docker-compose up -d
+```
+
+### 🚀 Run the Full Service with Docker Compose (For Existing Builds)
+
+From your project's **root** directory:
 
 ```bash
 docker-compose up -d
@@ -120,7 +190,7 @@ docker-compose up -d
 
 ## 🖼️ Open WebUI Setup (Frontend for OpenAI API)
 
-Run this container for the Open WebUI interface:
+1. Run this container for the Open WebUI interface:
 
 ```bash
 docker run -d -p 3000:8080 -e OPENAI_API_KEY=your_secret_key \
@@ -128,18 +198,21 @@ docker run -d -p 3000:8080 -e OPENAI_API_KEY=your_secret_key \
 --name open-webui --restart always ghcr.io/open-webui/open-webui:main
 ```
 
----
 
-## 💡 How to Use
-
-Once the RAG system is up and running:
-
-1. Open your browser.
 2. Navigate to:
-```
-http://localhost:3000
-```
-3. Start querying your knowledge base via the Open WebUI frontend!
+```http://localhost:3000```
+
+
+3. Sign in with your Name, Email, and Password
+
+
+4. To connect the services together, on the bottom left corner of the Open WebUI frontend:
+a. goto: Admin Panel -> Settings -> Connections -> Manage OpenAI API Connections
+b. Add new connection:
+    URL: http://rag-service:8090/v1
+    KEY: "YOUR API KEY HERE" must match the **OPENAI_API_KEY** you're using inside your **.env** file.
+
+After verifying the connection you should be able to find "**FAU LLM 2.0**" in the dropdown list of models.
 
 ---
 

@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field, Extra
 
-from rag.rag_retrieval import RAG_Retrieval
-from helpers.utils import load_vector_db, verify_api_key
-from server.university_api import query_university_endpoint
-from _01_embedding_service.app.main import embedding_model_instance
+from retrievers.dense_retrieval import dense_retrieval_instance
+from embedding_service.app.main import embedding_model_instance
+from helpers.utils import load_vector_db
+from rag_service.university_api import query_university_endpoint
 from typing import Optional, List, Dict, Any
 
 from helpers.exception import CustomException
@@ -125,13 +125,11 @@ async def create_completion(
             logging.info("Response with RAG")
 
             # Step 1: RAG retrieval
-            print(f"User Prompt: {user_prompt}")
-
             query_embedding = embedding_model_instance.get_embedding(user_prompt)
 
             query_embedding = np.array(query_embedding, dtype="float32").reshape(1, -1)
-
-            retrieved_docs = RAG_Retrieval.dense_retrieval_reranking(query_embedding, index, metadata, top_k=20)
+            
+            retrieved_docs = dense_retrieval_instance.dense_retrieval_reranking(query_embedding, index, metadata, top_k=20)
             logging.info(f"Retrieved Documents: {retrieved_docs}")
 
             urls = []            

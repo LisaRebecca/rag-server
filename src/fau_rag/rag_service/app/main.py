@@ -1,19 +1,18 @@
 from fastapi import FastAPI, HTTPException, Response, Request, status
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
-from server import fastapi_router
-from server.fastapi_router import cache_index
+from rag_service.rag_pipeline import cache_index
 from helpers.smart_cache import SmartCache
 from helpers.exception import CustomException
 from helpers.utils import load_all_model_configs
 from pydantic import BaseModel
 from prometheus_client import Gauge, generate_latest
+import rag_service.rag_pipeline as rag_pipeline
 import logging
 import uvicorn
 import psutil
 import sys
 import json
-from pydantic import BaseModel
 
 # Prometheus Metrics
 CPU_USAGE = Gauge("cpu_usage", "Current CPU Usage Percentage")
@@ -60,7 +59,7 @@ async def preflight_handler(request: Request):
     return Response(content="Preflight OK", headers=headers)
 
 # Include API routers
-app.include_router(fastapi_router.router)
+app.include_router(rag_pipeline.router)
 
 # Initialize RAG application
 cache = SmartCache(index = cache_index)

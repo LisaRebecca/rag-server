@@ -1,0 +1,11 @@
+  services:
+    embedding-service:
+      image: embedding-service
+      container_name: embedding-service
+      build:
+        dockerfile: Dockerfile
+      ports:
+        - "8070:8070"
+      environment:
+        - HOST=0.0.0.0
+        - PORT=8070

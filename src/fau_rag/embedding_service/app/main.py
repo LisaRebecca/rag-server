@@ -14,7 +14,6 @@ from fastapi import FastAPI
 from constants import CONFIG_FILE_PATH
 from helpers.utils import read_yaml
 
-from openai import OpenAI
 from typing import List
 
 app = FastAPI()

@@ -1,4 +1,4 @@
-from rag.rag_retrieval import retriever
+from sentence_transformers import SentenceTransformer
 from helpers.exception import CustomException
 from helpers.logger import logging
 import faiss
@@ -8,7 +8,8 @@ import sys
 import json
 import os
 
-CACHE_FILE = "/src/fau_rag/config/smart_cache.json"
+CACHE_FILE = "config/smart_cache.json"
+retriever = SentenceTransformer("sentence-transformers/all-mpnet-base-v2") # Hugging Face model
 
 class SmartCache:
     def __init__(self, index: IndexFlatL2 = faiss.IndexFlatL2(128), model_name = retriever, similarity_threshold = 0.7, cache_file = CACHE_FILE):

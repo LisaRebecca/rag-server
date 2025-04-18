@@ -56,41 +56,6 @@ def filter_results(results, query):
                 if any(keyword in metadata['text'].lower()):
                     filtered_results.append(result)
     return filtered_results
-
-def dense_embeddings(dense_model, metadata, batch_size = 32):
-    if not metadata:
-        raise ValueError("Metadata Empty or None!")
-    
-    #texts = [entry.get("text") for entry in metadata if entry.get("texts")]
-    for entry in metadata:
-        if entry.get("text"):
-            texts = [entry.get("text")]
-
-    if not texts:
-        raise ValueError("No valid Text entries found in your Metadata!")
-    
-    print(f"Total valid texts to process: {len(texts)}")
-
-    embeddings = []
-    total_batches = (len(texts) + batch_size - 1) // batch_size
-
-    for i in range(total_batches):
-        batch_start = i * batch_size
-        batch_end = min(batch_start + batch_size, len(texts))
-        batch_texts = texts[batch_start::batch_end]
-
-        try:
-            print(f"Processing batch {i + 1}/{total_batches}...")
-            batch_embeddings = dense_model.encode(batch_texts, convert_to_numpy=True)
-            embeddings.extend(batch_embeddings)
-
-        except Exception as e:
-            print(f"Error processing batch {i + 1}: {e}")
-            continue
-
-    embeddings = np.array(embeddings)
-    print(f"Computed embeddings for {embeddings.shape[0]} entries.")
-    return embeddings
     
 def save_vector_db(embeddings, chunks, index_file, metadata_file):
     try:
@@ -214,3 +179,20 @@ def load_all_model_configs(config_path: str):
         configs = json.load(f)
     
     return configs
+
+def cosine_similarity(a, b):
+    dot_product = sum([x * y for x, y in zip(a,b)])
+    norm_a = sum([x ** 2 for x in a]) ** 0.5
+    norm_b = sum([x ** 2 for x in b]) ** 0.5
+    return dot_product / (norm_a * norm_b)
+
+def fast_rerank(query_embedding, candidate_embeddings, candidate_texts, final_top_k):
+        """
+        Re-rank candidate texts by computing cosine similarity between the query and candidate embeddings.
+        Assumes that both the query_embedding and candidate_embeddings are L2-normalized.
+        """
+        # Compute cosine similarities (dot product for normalized vectors)
+        sims = np.dot(candidate_embeddings, query_embedding.T).squeeze()  # shape (n,)
+        # Sort candidate texts by similarity score (highest first)
+        ranked = sorted(zip(candidate_texts, sims.tolist()), key=lambda x: x[1], reverse=True)
+        return [text for text, score in ranked[:final_top_k]]

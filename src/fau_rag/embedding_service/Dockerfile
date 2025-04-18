@@ -6,15 +6,15 @@ WORKDIR /fau_rag
 
 # Copy the project structure into the container
 COPY . /fau_rag
-COPY ./_02_rag_service/entrypoint.sh /entrypoint.sh
+COPY ./embedding_service/entrypoint.sh /entrypoint.sh
 
 # Install dependencies
-RUN pip install -r _02_rag_service/requirements.txt
+RUN pip install -r embedding_service/requirements.txt
 
 RUN apt update && apt install -y curl
 
 # Expose the port the application will run on
-EXPOSE 8090
+EXPOSE 8070
 
 # Command to run the application
 CMD ["/entrypoint.sh"]

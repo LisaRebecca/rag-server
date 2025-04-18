@@ -5,4 +5,4 @@ PORT=${PORT:-8070}
 WORKERS=${WORKERS:-1}
 
 # Command to run the application
-python -m uvicorn _01_embedding_service.app.main:app --host ${IP} --port ${PORT} --workers ${WORKERS}
+python -m uvicorn embedding_service.app.main:app --host ${IP} --port ${PORT} --workers ${WORKERS}

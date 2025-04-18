@@ -1,0 +1,11 @@
+  services:
+    rag-service:
+      image: rag-service
+      container_name: rag-service
+      build:
+        dockerfile: Dockerfile
+      ports:
+        - "8090:8090"
+      environment:
+        - HOST=0.0.0.0
+        - PORT=8090
