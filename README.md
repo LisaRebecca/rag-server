@@ -57,35 +57,35 @@ cd rag-server
 
 ⚠️ **Note:** Make sure you have Python installed (recommendation: Python 3.9+)
 
-A. Inside your project's **root** directory create a **Virtual Environment**:
+a. Inside your project's **root** directory create a **Virtual Environment**:
 
 ```bash
 python3 -m venv myvenv
 ```
 
-B. Activate the Virtual Environment:
+b. Activate the Virtual Environment:
 
-    i. On Linux/**macOS**:
-    
-        ```source myvenv/bin/activate```
+i. On Linux/**macOS**:
 
-    ii. On **Windows**:
+    `source myvenv/bin/activate`
 
-        ```myvenv\Scripts\activate```
+ii. On **Windows**:
 
-C. From your project's **root** directory install all required packages:
+    `myvenv\Scripts\activate`
+
+c. From your project's **root** directory install all required packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-D. Install Open WebUI:
+d. Install Open WebUI:
 
 ```bash
 pip install open-webui
 ```
 
-E. Start the Open WebUI server:
+e. Start the Open WebUI server:
 
 ```bash
 open-webui serve
@@ -102,10 +102,10 @@ uvicorn main:app --reload
 
 
 4️⃣ Finally, open your browser and navigate to: 
-```http://localhost:8090```
+`http://localhost:8090`
 
 The API documentation and endpoints will be available at: 
-```http://localhost:8090/docs```
+`http://localhost:8090/docs`
 
 ---
 
@@ -201,7 +201,7 @@ docker run -d -p 3000:8080 -e OPENAI_API_KEY=your_secret_key \
 
 
 2. Navigate to:
-```http://localhost:3000```
+`http://localhost:3000`
 
 
 3. Sign in with your Name, Email, and Password
@@ -209,11 +209,11 @@ docker run -d -p 3000:8080 -e OPENAI_API_KEY=your_secret_key \
 
 4. To connect the services together, on the bottom left corner of the Open WebUI frontend:
 
-A. goto: Admin Panel -> Settings -> Connections -> Manage OpenAI API Connections
+    a. Goto: Admin Panel -> Settings -> Connections -> Manage OpenAI API Connections
 
-B. Add new connection:
+    b. Add new connection:
 
-    URL: http://rag-service:8090/v1
+    URL: `http://rag-service:8090/v1`
 
     KEY: "YOUR API KEY HERE" must match the **OPENAI_API_KEY** you're using inside your **.env** file.
 

@@ -121,24 +121,15 @@ POST /generate
 
 ## 🕸️ System Flow Overview
 
-User Input (Open WebUI)
-
-          ⬇️
-
-Embedding Vector (Embedding Service)
-
-          ⬇️
-
-Relevant Documents (Retrieval Service)
-
-          ⬇️
-
-Final Answer (RAG Service)
-
-          ⬇️
-
-Displayed to User (Open WebUI)
-
+1- **User Input** — *(via Open WebUI)*  
+⬇️  
+2- **Embedding Generation** — *(handled by Embedding Service)*  
+⬇️  
+3- **Document Retrieval** — *(handled by Retrieval Service)*  
+⬇️  
+4- **Answer Generation** — *(handled by RAG Service)*  
+⬇️  
+5- **Response Displayed** — *(back to Open WebUI)*  
 
 ---
 
