@@ -67,11 +67,11 @@ b. Activate the Virtual Environment:
 
 i. On Linux/**macOS**:
 
-    `source myvenv/bin/activate`
+`source myvenv/bin/activate`
 
 ii. On **Windows**:
 
-    `myvenv\Scripts\activate`
+`myvenv\Scripts\activate`
 
 c. From your project's **root** directory install all required packages:
 
@@ -115,7 +115,9 @@ Download the **chunked JSONL knowledge base** here:
 
 👉 [Download Knowledge Base](https://drive.google.com/file/d/1_4BNVhkEaAOngTAsgLgh38kWe0aQdrqW/view?usp=drive_link)
 
-Create a new folder labeled ```knowledgebase``` inside `src/fau_rag` and drop the newly downloaded knowledge base inside of it.
+Inside `src/fau_rag` create a new folder labeled `knowledgebase` and drop the newly downloaded knowledge base inside of it.
+
+If `src/fau_rag/knowledgebase` already exists just drop the knowledgebase file inside of it.
 
 ---
 
@@ -128,12 +130,7 @@ Select your preferred index depending on speed vs. embedding quality:
 | **Light Index**   | 384        | `all-MiniLM-L6-v2`         | [Download](https://drive.google.com/file/d/1qOECFQ_Df_sBCextiqRbPjeKHTFXpbdW/view?usp=sharing) |
 | **Normal Index**  | 768        | `all-mpnet-base-v2`        | [Download](https://drive.google.com/file/d/1-0ncb5rZ-9SSosAocHnuR6iYIfLLdtNE/view?usp=sharing) |
 
-➡️ After downloading, update your path in:
-
-```python
-VECTORSTORE_PATH
-```
-Located in `fau_rag/rag_service/rag_pipeline.py`.
+After successfully downloading the FAISS file, drop it inside `src/fau_rag/knowledgebase`
 
 ---
 
